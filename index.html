@@ -16,21 +16,6 @@
 </head>
 <body>
 
-
-<!-- API KEY SCREEN -->
-<div id="apiKeyScreen" style="position:fixed;inset:0;background:var(--cream);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:28px;padding:48px;max-width:480px;width:100%;box-shadow:0 8px 48px rgba(44,40,37,0.12);border:1px solid var(--light-border);animation:slideUp 0.5s ease;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--charcoal);margin-bottom:4px;">Clara</div>
-    <div style="font-size:11px;color:var(--warm-gray);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px;">Configurazione iniziale</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--charcoal);margin-bottom:10px;">Inserisci la tua API key</div>
-    <div style="font-size:13px;color:var(--warm-gray);line-height:1.6;margin-bottom:24px;">Per far funzionare Clara hai bisogno di una chiave API di Anthropic. La trovi su <strong>console.anthropic.com</strong> → API Keys. Inizia con <code style="background:var(--cream);padding:2px 6px;border-radius:4px;font-size:12px;">sk-ant-...</code></div>
-    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'" onkeydown="if(event.key==='Enter')saveApiKey()"/>
-    <div id="apiKeyError" style="font-size:12px;color:var(--deep-rose);margin-bottom:12px;display:none;">Chiave non valida — deve iniziare con sk-ant-</div>
-    <button onclick="saveApiKey()" style="width:100%;padding:16px;background:var(--charcoal);color:var(--cream);border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--deep-rose)'" onmouseout="this.style.background='var(--charcoal)'">Inizia con Clara →</button>
-    <div style="text-align:center;font-size:11px;color:var(--warm-gray);margin-top:12px;opacity:0.7;">La chiave viene salvata solo sul tuo dispositivo</div>
-  </div>
-</div>
-
 <!-- ONBOARDING -->
 <div id="onboarding">
   <div class="onboarding-card">
