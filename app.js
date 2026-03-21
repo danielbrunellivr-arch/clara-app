@@ -1277,7 +1277,7 @@ IMPORTANTE: stile_emergente deve riflettere quello che emerge REALMENTE dalla co
 
 // ─── API KEY ───
 function getApiKey() {
-  return localStorage.getItem('clara_apikey') || '';
+  return 'proxy';
 }
 
 function saveApiKey() {
