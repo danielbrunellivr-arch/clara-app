@@ -1,564 +1,102 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#2C2825">
-<meta name="description" content="Clara — La tua guida emotiva per esplorare i pattern di attaccamento">
-<title>Clara — La tua guida emotiva</title>
-<link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Clara">
-</head>
-<body>
+// ─── SUPABASE ───
+const SUPABASE_URL = 'https://qbwbhnzsliqijyltpcki.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_4bzt7LbS8By2fiWM5nB7dA_7vfFdMvn';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let currentUser = null;
+let userProfile = null;
 
-<!-- API KEY SCREEN -->
-<div id="apiKeyScreen" style="position:fixed;inset:0;background:var(--cream);z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:28px;padding:48px;max-width:480px;width:100%;box-shadow:0 8px 48px rgba(44,40,37,0.12);border:1px solid var(--light-border);animation:slideUp 0.5s ease;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--charcoal);margin-bottom:4px;">Clara</div>
-    <div style="font-size:11px;color:var(--warm-gray);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px;">Configurazione iniziale</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--charcoal);margin-bottom:10px;">Inserisci la tua API key</div>
-    <div style="font-size:13px;color:var(--warm-gray);line-height:1.6;margin-bottom:24px;">Per far funzionare Clara hai bisogno di una chiave API di Anthropic. La trovi su <strong>console.anthropic.com</strong> → API Keys. Inizia con <code style="background:var(--cream);padding:2px 6px;border-radius:4px;font-size:12px;">sk-ant-...</code></div>
-    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'" onkeydown="if(event.key==='Enter')saveApiKey()"/>
-    <div id="apiKeyError" style="font-size:12px;color:var(--deep-rose);margin-bottom:12px;display:none;">Chiave non valida — deve iniziare con sk-ant-</div>
-    <button onclick="saveApiKey()" style="width:100%;padding:16px;background:var(--charcoal);color:var(--cream);border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--deep-rose)'" onmouseout="this.style.background='var(--charcoal)'">Inizia con Clara →</button>
-    <div style="text-align:center;font-size:11px;color:var(--warm-gray);margin-top:12px;opacity:0.7;">La chiave viene salvata solo sul tuo dispositivo</div>
-  </div>
-</div>
+// Inizializza sessione Supabase
+async function initSupabase() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadProfile();
+    return true;
+  }
+  return false;
+}
 
-<!-- ONBOARDING -->
-<div id="onboarding">
-  <div class="onboarding-card">
-    <div class="onboarding-logo">Clara</div>
-    <div class="onboarding-tagline">La tua guida emotiva</div>
-    <div class="ob-progress" id="obProgress"></div>
+// Carica profilo utente
+async function loadProfile() {
+  if (!currentUser) return;
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+  if (data) {
+    userProfile = data;
+    if (data.stile_attaccamento) userStyle = data.stile_attaccamento;
+    if (data.nome) {
+      document.getElementById('userName').textContent = data.nome;
+      document.getElementById('userAvatar').textContent = data.nome.charAt(0).toUpperCase();
+    }
+  }
+}
 
-    <div class="ob-step active" id="ob-step-0">
-      <div class="ob-question">Benvenuta. Sono Clara.</div>
-      <div class="ob-sub">Sono qui per accompagnarti nell’esplorazione dei tuoi pattern emotivi e relazionali — con cura, senza giudizi.<br><br>Ti farò 8 domande per conoscerti meglio e costruire il tuo profilo di attaccamento. Ci vogliono circa 3 minuti.</div>
-      <div class="ob-nav" style="justify-content:flex-end">
-        <button class="ob-btn-next" onclick="obNext()">Iniziamo →</button>
-      </div>
-    </div>
+// Salva profilo
+async function saveProfile(updates) {
+  if (!currentUser) return;
+  await supabase.from('profiles').update(updates).eq('id', currentUser.id);
+}
 
-    <div class="ob-step" id="ob-step-1">
-      <div class="ob-question">Quando qualcuno che ami si allontana o non risponde, come reagisci?</div>
-      <div class="ob-sub">Non c’è risposta giusta o sbagliata — scegli la più spontanea.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="1" data-val="D" onclick="selectOption(this)">Mi fido che sia temporaneo — gli do spazio senza ansia</div>
-        <div class="ob-option" data-step="1" data-val="A" onclick="selectOption(this)">Mi preoccupo molto — mi chiedo se ho fatto qualcosa di sbagliato</div>
-        <div class="ob-option" data-step="1" data-val="B" onclick="selectOption(this)">Non ci penso più di tanto — ho bisogno del mio spazio</div>
-        <div class="ob-option" data-step="1" data-val="C" onclick="selectOption(this)">Mi sento in balia delle emozioni — voglio avvicinarmi e scappare allo stesso tempo</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-1">Avanti</button>
-      </div>
-    </div>
+// Carica conversazioni dal cloud
+async function loadConversationsFromCloud() {
+  if (!currentUser) return;
+  const { data } = await supabase
+    .from('conversazioni')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('ts', { ascending: true });
+  if (data && data.length > 0) {
+    conversationHistory = data.map(m => ({
+      role: m.role,
+      content: m.content,
+      ts: new Date(m.ts).getTime()
+    }));
+    restoreMessages();
+  }
+}
 
-    <div class="ob-step" id="ob-step-2">
-      <div class="ob-question">Quando ti senti ferita in una relazione, qual è la tua prima reazione?</div>
-      <div class="ob-sub">Osserva la risposta più istintiva, non quella che vorresti avere.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="2" data-val="B" onclick="selectOption(this)">Mi chiudo — preferisco stare sola a elaborare</div>
-        <div class="ob-option" data-step="2" data-val="D" onclick="selectOption(this)">Cerco di capire cosa è successo con calma, anche se fa male</div>
-        <div class="ob-option" data-step="2" data-val="A" onclick="selectOption(this)">Cerco subito di riconciliarmi — l’incertezza mi pesa troppo</div>
-        <div class="ob-option" data-step="2" data-val="C" onclick="selectOption(this)">Reazioni intense che poi mi lasciano confusa e stanca</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-2">Avanti</button>
-      </div>
-    </div>
+// Salva messaggio nel cloud
+async function saveMessageToCloud(role, content, ts) {
+  if (!currentUser) return;
+  await supabase.from('conversazioni').insert({
+    user_id: currentUser.id,
+    role,
+    content,
+    ts: new Date(ts).toISOString()
+  });
+}
 
-    <div class="ob-step" id="ob-step-3">
-      <div class="ob-question">Come ti senti rispetto alla vicinanza emotiva nelle relazioni?</div>
-      <div class="ob-sub">Pensa alle tue relazioni più significative.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="3" data-val="C" onclick="selectOption(this)">Mi attrae ma mi spaventa — a volte mi sento sopraffatta</div>
-        <div class="ob-option" data-step="3" data-val="A" onclick="selectOption(this)">La desidero moltissimo, ma ho paura che non durerà</div>
-        <div class="ob-option" data-step="3" data-val="D" onclick="selectOption(this)">Mi piace la vicinanza e riesco a viverla senza perdermi</div>
-        <div class="ob-option" data-step="3" data-val="B" onclick="selectOption(this)">Troppa vicinanza mi mette a disagio — ho bisogno di confini chiari</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-3">Avanti</button>
-      </div>
-    </div>
+// Segna esercizio come completato
+async function markExerciseComplete(exerciseId) {
+  if (!currentUser) return;
+  const { data: existing } = await supabase
+    .from('esercizi_completati')
+    .select('id')
+    .eq('user_id', currentUser.id)
+    .eq('esercizio_id', exerciseId)
+    .single();
+  if (!existing) {
+    await supabase.from('esercizi_completati').insert({
+      user_id: currentUser.id,
+      esercizio_id: exerciseId
+    });
+  }
+}
 
-    <div class="ob-step" id="ob-step-4">
-      <div class="ob-question">Pensando alla tua infanzia, come descriveresti il clima emotivo in famiglia?</div>
-      <div class="ob-sub">Non serve che sia stato tutto positivo o negativo — cerca la sensazione prevalente.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="4" data-val="B" onclick="selectOption(this)">Distante — le emozioni non si esprimevano molto, ci si arrangiva da soli</div>
-        <div class="ob-option" data-step="4" data-val="C" onclick="selectOption(this)">Caotico o doloroso — c’era paura o confusione nelle relazioni familiari</div>
-        <div class="ob-option" data-step="4" data-val="D" onclick="selectOption(this)">Abbastanza stabile — mi sentivo vista e al sicuro, anche nelle difficoltà</div>
-        <div class="ob-option" data-step="4" data-val="A" onclick="selectOption(this)">Imprevedibile — non sapevo mai come avrebbero reagito le persone care</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-4">Avanti</button>
-      </div>
-    </div>
+// Carica esercizi completati
+async function loadCompletedExercises() {
+  if (!currentUser) return [];
+  const { data } = await supabase
+    .from('esercizi_completati')
+    .select('esercizio_id')
+    .eq('user_id', currentUser.id);
+  return data ? data.map(d => d.esercizio_id) : [];
+}
 
-    <div class="ob-step" id="ob-step-5">
-      <div class="ob-question">Durante un conflitto con il partner o una persona cara, come ti comporti di solito?</div>
-      <div class="ob-sub">Pensa all’ultima volta che hai litigato con qualcuno di importante.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="5" data-val="A" onclick="selectOption(this)">Insisto finché non risolviamo — l’idea di andare a letto con qualcosa in sospeso mi spaventa</div>
-        <div class="ob-option" data-step="5" data-val="D" onclick="selectOption(this)">Cerco di restare presente e ascoltare, anche quando fa male</div>
-        <div class="ob-option" data-step="5" data-val="C" onclick="selectOption(this)">Le emozioni prendono il sopravvento — a volte dico o faccio cose che poi rimpiango</div>
-        <div class="ob-option" data-step="5" data-val="B" onclick="selectOption(this)">Preferisco staccare e tornare sull’argomento quando sono più fredda</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-5">Avanti</button>
-      </div>
-    </div>
-
-    <div class="ob-step" id="ob-step-6">
-      <div class="ob-question">Come ti senti rispetto al tuo valore nelle relazioni?</div>
-      <div class="ob-sub">Ascolta la voce più profonda, non quella che vorresti avere.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="6" data-val="D" onclick="selectOption(this)">Ho una discreta fiducia in me stessa, anche se non sempre tutto va bene</div>
-        <div class="ob-option" data-step="6" data-val="C" onclick="selectOption(this)">Oscillo — a volte mi sento speciale, altre invisibile o sbagliata</div>
-        <div class="ob-option" data-step="6" data-val="B" onclick="selectOption(this)">Mi sento più a mio agio da sola — dipendere dagli altri mi fa sentire vulnerabile</div>
-        <div class="ob-option" data-step="6" data-val="A" onclick="selectOption(this)">Ho spesso paura di non essere abbastanza — che prima o poi mi lascino</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-6">Avanti</button>
-      </div>
-    </div>
-
-    <div class="ob-step" id="ob-step-7">
-      <div class="ob-question">Nelle amicizie importanti, come ti senti di solito?</div>
-      <div class="ob-sub">Le relazioni amicali spesso rispecchiano pattern profondi quanto quelle romantiche.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="7" data-val="C" onclick="selectOption(this)">Le amicizie sono intense ma spesso complicate — c’è molto calore ma anche conflitti</div>
-        <div class="ob-option" data-step="7" data-val="B" onclick="selectOption(this)">Preferisco pochi legami — aprirsi troppo mi mette a disagio</div>
-        <div class="ob-option" data-step="7" data-val="A" onclick="selectOption(this)">Mi preoccupo di essere un peso, o che le amiche si stanchino di me</div>
-        <div class="ob-option" data-step="7" data-val="D" onclick="selectOption(this)">Ho relazioni solide — riesco a dare e ricevere senza troppa ansia</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-7">Avanti</button>
-      </div>
-    </div>
-
-    <div class="ob-step" id="ob-step-8">
-      <div class="ob-question">In questo momento della tua vita, cosa senti di cercare di più?</div>
-      <div class="ob-sub">Non c’è risposta giusta — è solo per capire dove sei adesso.</div>
-      <div class="ob-options">
-        <div class="ob-option" data-step="8" data-val="peace" onclick="selectOption(this)">Più pace interiore e meno ansia nelle relazioni</div>
-        <div class="ob-option" data-step="8" data-val="connect" onclick="selectOption(this)">Imparare ad aprirmi e a lasciarmi avvicinare davvero</div>
-        <div class="ob-option" data-step="8" data-val="stable" onclick="selectOption(this)">Stabilità emotiva e pattern più sani</div>
-        <div class="ob-option" data-step="8" data-val="deepen" onclick="selectOption(this)">Capire me stessa più in profondità</div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
-        <button class="ob-btn-next" onclick="obNext()" disabled id="next-8">Calcola il mio profilo →</button>
-      </div>
-    </div>
-
-    <div class="ob-step" id="ob-step-result">
-      <div id="ob-result-content"></div>
-    </div>
-  </div>
-</div>
-
-<!-- HAMBURGER -->
-<button class="hamburger" id="hamburger" onclick="toggleSidebar()">
-  <span></span><span></span><span></span>
-</button>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-<!-- SIDEBAR -->
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-name">Clara</div>
-    <div class="logo-tagline">La tua guida emotiva</div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Il tuo spazio</div>
-    <div class="nav-item active" onclick="showView('chat')">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Parla con Clara
-    </div>
-    <div class="nav-item" onclick="showView('specchio')">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Il tuo specchio interiore
-    </div>
-    <div class="nav-item" onclick="showView('progressi')">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Il tuo percorso
-    </div>
-  </div>
-  <div class="attachment-section">
-    <div class="nav-label">Stili di attaccamento</div>
-    <div class="attachment-pill" onclick="showStyle('ansioso')"><span class="dot dot-ansioso"></span> Stile Ansioso</div>
-    <div class="attachment-pill" onclick="showStyle('evitante')"><span class="dot dot-evitante"></span> Stile Evitante</div>
-    <div class="attachment-pill" onclick="showStyle('disorganizzato')"><span class="dot dot-disorganizzato"></span> Stile Disorganizzato</div>
-    <div class="attachment-pill" onclick="showStyle('sicuro')"><span class="dot dot-sicuro"></span> Stile Sicuro</div>
-    <div class="nav-item" onclick="showView('esercizi')">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Esercizi guidati
-    </div>
-    <div class="nav-item" onclick="showView('libri')" style="margin-top:0px;">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Se vuoi approfondire
-    </div>
-  </div>
-  <div style="padding:0 0 8px;border-top:1px solid rgba(255,255,255,0.07);margin-top:8px">
-    <div class="nav-item" onclick="showView('piani')" style="margin-top:8px;">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Piani e abbonamento</span>
-      <span style="margin-left:auto;font-size:10px;background:rgba(196,137,122,0.2);color:var(--rose);border-radius:10px;padding:1px 7px;font-weight:500">Pro</span>
-    </div>
-  </div>
-  <div class="sidebar-bottom">
-    <div class="user-pill">
-      <div class="user-avatar" id="userAvatar">·</div>
-      <div class="user-info">
-        <div class="user-name">Utente</div>
-        <div class="user-status" id="userStatus">In esplorazione ✦</div>
-      </div>
-    </div>
-    <button onclick="resetOnboarding()" style="margin-top:14px;width:100%;padding:9px 12px;background:transparent;border:1px solid rgba(245,240,232,0.12);border-radius:10px;color:rgba(245,240,232,0.4);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;text-align:left;display:flex;align-items:center;gap:8px;" onmouseover="this.style.borderColor='rgba(196,137,122,0.4)';this.style.color='rgba(245,240,232,0.75)'" onmouseout="this.style.borderColor='rgba(245,240,232,0.12)';this.style.color='rgba(245,240,232,0.4)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Rifai il test
-    </button>
-  </div>
-</nav>
-
-<!-- MAIN -->
-<main class="main">
-  <!-- CHAT -->
-  <div class="view active" id="view-chat">
-    <div class="chat-header">
-      <div class="clara-avatar">C</div>
-      <div class="chat-header-info">
-        <h2>Clara</h2>
-        <p>Terapeuta empatica · Esperta in stili di attaccamento</p>
-      </div>
-      <div class="msg-counter" id="msgCounter"></div>
-    </div>
-    <div class="messages-area" id="messagesArea">
-      <div class="message clara">
-        <div class="message-avatar">C</div>
-        <div>
-          <div class="message-bubble">Ciao, sono Clara. Sono qui per te — senza giudizi, senza fretta.<br><br>Puoi raccontarmi come ti senti in questo momento, oppure dirmi cosa ti ha portato qui. Siamo al sicuro. ✦</div>
-          <div class="message-time">Ora</div>
-        </div>
-      </div>
-    </div>
-    <div class="input-area">
-      <div class="limit-banner" id="limitBanner">
-        <h4>Hai utilizzato i messaggi di oggi ✦</h4>
-        <p>Con Clara Free hai 3 messaggi al giorno. I tuoi si azzereranno a mezzanotte.<br>Oppure passa a Clara Essenziale per scrivere senza limiti.</p>
-        <div class="limit-banner-btns">
-          <button class="btn-upgrade" onclick="showView('piani')">Scopri i piani →</button>
-          <button class="btn-tomorrow" onclick="hideBanner()">A domani</button>
-        </div>
-      </div>
-      <div id="inputWrapper">
-        <div class="input-wrapper">
-          <textarea id="messageInput" placeholder="Scrivi a Clara..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
-          </button>
-        </div>
-        <div class="input-hint">Clara risponde con intelligenza artificiale · Non sostituisce un professionista</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SPECCHIO INTERIORE -->
-  <div class="view" id="view-specchio">
-    <div class="content-view">
-      <div class="page-header">
-        <h1>Il tuo specchio<br><em>interiore</em></h1>
-        <p>Qui Clara elabora i temi emersi nelle vostre conversazioni e ti restituisce un riflesso autentico di te stessa — pattern emotivi, stile di attaccamento emergente e aree di crescita.</p>
-      </div>
-      <button class="analyze-btn" onclick="generateReflection()" id="analyzeBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke-linecap="round"/></svg>
-        Chiedi a Clara di riflettere con te
-      </button>
-      <div id="reflectionArea"></div>
-    </div>
-  </div>
-
-  <!-- STILI -->
-  <div class="view" id="view-stili">
-    <div class="content-view">
-      <div class="page-header">
-        <h1 id="stileTitle">Stile di Attaccamento</h1>
-        <p id="stileSubtitle">Esplora le caratteristiche, i pattern emotivi e gli strumenti dedicati.</p>
-      </div>
-      <div id="stileContent"></div>
-    </div>
-  </div>
-
-  <!-- LIBRI -->
-  <div class="view" id="view-libri">
-    <div class="content-view">
-      <div class="page-header">
-        <h1>Se vuoi<br><em>approfondire</em></h1>
-        <p>Una selezione curata di libri per esplorare gli stili di attaccamento, la regolazione emotiva e la crescita personale.</p>
-      </div>
-      <div class="books-grid">
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5E6D3,#E8C4A8)">📖</div><div class="book-info"><h4>Attached</h4><div class="author">Amir Levine & Rachel Heller</div><p>Il testo fondamentale sulla teoria dell'attaccamento applicata alle relazioni adulte.</p><span class="book-tag tag-ansioso">Per tutti gli stili</span></div></div>
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#D3E8F5,#A8C4E8)">📘</div><div class="book-info"><h4>Hold Me Tight</h4><div class="author">Sue Johnson</div><p>Sette conversazioni per un amore duraturo. Un classico sulla terapia focalizzata sulle emozioni.</p><span class="book-tag tag-evitante">Relazioni</span></div></div>
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#E8D3F5,#C4A8E8)">📗</div><div class="book-info"><h4>Il Corpo Accusa il Colpo</h4><div class="author">Bessel van der Kolk</div><p>Come il trauma si conserva nel corpo e come trovare la strada verso la guarigione.</p><span class="book-tag tag-disorganizzato">Trauma</span></div></div>
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#D3F5E3,#A8E8C4)">📙</div><div class="book-info"><h4>Wired for Love</h4><div class="author">Stan Tatkin</div><p>Come capire il cervello del tuo partner e costruire una relazione sicura e duratura.</p><span class="book-tag tag-sicuro">Attaccamento sicuro</span></div></div>
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5EED3,#E8D4A8)">📕</div><div class="book-info"><h4>Polyvagal Theory</h4><div class="author">Stephen Porges</div><p>La teoria polivagale e il suo impatto sulla regolazione emotiva e le relazioni.</p><span class="book-tag tag-disorganizzato">Neuroscienze</span></div></div>
-        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5D3D3,#E8A8A8)">📒</div><div class="book-info"><h4>L'Intelligenza Emotiva</h4><div class="author">Daniel Goleman</div><p>Il classico sull'importanza delle emozioni nell'intelligenza umana e nelle relazioni.</p><span class="book-tag tag-ansioso">Emozioni</span></div></div>
-      </div>
-    </div>
-  </div>
-  <!-- ESERCIZI -->
-  <div class="view" id="view-esercizi">
-    <div class="content-view">
-      <div class="page-header">
-        <h1>Esercizi<br><em>guidati</em></h1>
-        <p>Pratiche interattive per lavorare sui tuoi pattern emotivi. Ogni esercizio è pensato per il tuo stile di attaccamento — puoi farlo in pochi minuti, da sola, quando ne senti il bisogno.</p>
-      </div>
-
-      <div class="ex-section-title"><span style="background:#E8A87C"></span> Stile Ansioso — ridurre ossessioni e rassicurazioni</div>
-      <div class="ex-grid">
-        <div class="ex-card ansioso" onclick="openExercise('radicaCorpo')">
-          <span class="ex-tag tag-ansioso">Ancoraggio</span>
-          <h4>La radice del corpo</h4>
-          <p>Esercizio somatico per uscire dall'ansia da abbandono e tornare nel momento presente.</p>
-          <div class="ex-meta">5 min · guidato passo per passo</div>
-        </div>
-        <div class="ex-card ansioso" onclick="openExercise('letteraPaura')">
-          <span class="ex-tag tag-ansioso">Scrittura</span>
-          <h4>Lettera alla tua paura</h4>
-          <p>Scrivi una lettera alla parte di te che ha paura di essere lasciata.</p>
-          <div class="ex-meta">10 min · riflessione guidata</div>
-        </div>
-        <div class="ex-card ansioso" onclick="openExercise('termometro')">
-          <span class="ex-tag tag-ansioso">Consapevolezza</span>
-          <h4>Il termometro dell'ansia</h4>
-          <p>Impara a riconoscere l'intensità dell'ansia relazionale prima che diventi travolgente.</p>
-          <div class="ex-meta">7 min · con scala di intensità</div>
-        </div>
-      </div>
-
-      <div class="ex-section-title"><span style="background:#7CB9E8"></span> Stile Evitante — ridurre distanza e difese</div>
-      <div class="ex-grid">
-        <div class="ex-card evitante" onclick="openExercise('bisogno')">
-          <span class="ex-tag tag-evitante">Apertura</span>
-          <h4>Un bisogno alla volta</h4>
-          <p>Esercizio graduale per nominare un bisogno emotivo reale — senza doverlo subito condividere.</p>
-          <div class="ex-meta">5 min · privato e sicuro</div>
-        </div>
-        <div class="ex-card evitante" onclick="openExercise('muro')">
-          <span class="ex-tag tag-evitante">Corpo</span>
-          <h4>Dove sento il muro</h4>
-          <p>Esplora dove nel corpo si manifesta il bisogno di distanza emotiva.</p>
-          <div class="ex-meta">8 min · body scan guidato</div>
-        </div>
-        <div class="ex-card evitante" onclick="openExercise('vulnerabilita')">
-          <span class="ex-tag tag-evitante">Dialogo</span>
-          <h4>La vulnerabilità minima</h4>
-          <p>Pratica micro-passi di apertura emotiva verso qualcuno di sicuro.</p>
-          <div class="ex-meta">6 min · con riflessione</div>
-        </div>
-      </div>
-
-      <div class="ex-section-title"><span style="background:#B87CE8"></span> Stile Disorganizzato — ridurre caos e iper-reazione</div>
-      <div class="ex-grid">
-        <div class="ex-card disorganizzato" onclick="openExercise('ancora')">
-          <span class="ex-tag tag-disorganizzato">Regolazione</span>
-          <h4>L'ancora di sicurezza</h4>
-          <p>Tecnica polivagale per regolare il sistema nervoso nei momenti di attivazione intensa.</p>
-          <div class="ex-meta">4 min · immediato</div>
-        </div>
-        <div class="ex-card disorganizzato" onclick="openExercise('parteFuga')">
-          <span class="ex-tag tag-disorganizzato">Parti interiori</span>
-          <h4>La parte che vuole scappare</h4>
-          <p>Dialogo guidato con la parte che si attiva nel conflitto — per capirla senza esserne sopraffatta.</p>
-          <div class="ex-meta">12 min · con Clara</div>
-        </div>
-        <div class="ex-card disorganizzato" onclick="openExercise('colpaTua')">
-          <span class="ex-tag tag-disorganizzato">Autocompassione</span>
-          <h4>Non è colpa tua</h4>
-          <p>Esercizio per ridurre la vergogna legata ai propri pattern relazionali.</p>
-          <div class="ex-meta">8 min · guidato</div>
-        </div>
-        <div class="ex-card disorganizzato" onclick="openExercise('paradosso')">
-          <span class="ex-tag tag-disorganizzato">Integrazione</span>
-          <h4>Il paradosso del desiderio</h4>
-          <p>Lavora sul conflitto "voglio vicinanza ma mi spaventa" — stare con la tensione senza fuggire.</p>
-          <div class="ex-meta">10 min · profondo</div>
-        </div>
-      </div>
-
-      <div class="ex-section-title"><span style="background:#7CE8A8"></span> Stile Sicuro — mantenere e rafforzare</div>
-      <div class="ex-grid">
-        <div class="ex-card sicuro" onclick="openExercise('baseSicura')">
-          <span class="ex-tag tag-sicuro">Connessione</span>
-          <h4>La base sicura</h4>
-          <p>Rafforza la tua capacità di essere base sicura per gli altri — e per te stessa.</p>
-          <div class="ex-meta">7 min · riflessivo</div>
-        </div>
-        <div class="ex-card sicuro" onclick="openExercise('relazioniNutrono')">
-          <span class="ex-tag tag-sicuro">Gratitudine</span>
-          <h4>Le relazioni che nutrono</h4>
-          <p>Mappa le relazioni che ti danno energia e quelle che la tolgono.</p>
-          <div class="ex-meta">10 min · con mappa</div>
-        </div>
-        <div class="ex-card sicuro" onclick="openExercise('tempesta')">
-          <span class="ex-tag tag-sicuro">Resilienza</span>
-          <h4>Quando la tempesta arriva</h4>
-          <p>Come mantenere la base sicura durante un conflitto intenso senza perdere te stessa.</p>
-          <div class="ex-meta">8 min · pratico</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL ESERCIZIO -->
-  <div class="ex-modal-overlay" id="exModalOverlay" onclick="closeExerciseOnOverlay(event)">
-    <div class="ex-modal" id="exModal">
-      <div class="ex-modal-header">
-        <div class="ex-progress-bar"><div class="ex-progress-fill" id="exProgressFill" style="width:0%"></div></div>
-      </div>
-      <div class="ex-modal-body" id="exModalBody"></div>
-    </div>
-  </div>
-
-  <!-- PROGRESSI VIEW -->
-  <div class="view" id="view-progressi">
-    <div class="content-view">
-      <div class="page-header">
-        <h1>Il tuo<br><em>percorso</em></h1>
-        <p>Clara legge la tua storia e ti racconta dove sei arrivata — come il tuo stile emotivo si sta evolvendo e quali temi stanno emergendo nel tuo cammino.</p>
-      </div>
-
-      <button class="analyze-btn" onclick="generateProgressi()" id="progressiBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Chiedi a Clara di raccontare il tuo percorso
-      </button>
-
-      <div id="progressiArea"></div>
-    </div>
-  </div>
-
-  <!-- PIANI VIEW -->
-  <div class="view" id="view-piani">
-    <div class="content-view">
-
-      <div class="piani-hero">
-        <h1>Scegli il tuo<br><em>percorso con Clara</em></h1>
-        <p>Inizia gratuitamente. Abbonati quando senti che Clara fa davvero la differenza — senza pressioni, senza impegni a lungo termine.</p>
-      </div>
-
-      <div class="piani-grid">
-
-        <!-- FREE -->
-        <div class="piano-card free">
-          <div class="piano-name">Gratuito</div>
-          <div class="piano-price">€0 <span>/ sempre</span></div>
-          <div class="piano-annual">&nbsp;</div>
-          <ul class="piano-features">
-            <li class="on">7 giorni di prova completa</li>
-            <li class="on">Test stile di attaccamento</li>
-            <li class="on">3 messaggi al giorno con Clara</li>
-            <li class="on">Schede degli stili</li>
-            <li class="off">Specchio interiore</li>
-            <li class="off">Esercizi guidati</li>
-            <li class="off">Chat illimitata</li>
-          </ul>
-          <button class="piano-btn current" disabled>Piano attuale</button>
-        </div>
-
-        <!-- ESSENZIALE -->
-        <div class="piano-card essenziale">
-          <div class="piano-name">Clara Essenziale</div>
-          <div class="piano-price">€7 <span>/ mese</span></div>
-          <div class="piano-annual">oppure €59/anno — risparmi il 30%</div>
-          <ul class="piano-features">
-            <li class="on">Chat illimitata con Clara</li>
-            <li class="on">Storico conversazioni</li>
-            <li class="on">Specchio interiore completo</li>
-            <li class="on">Test stile di attaccamento</li>
-            <li class="on">Schede degli stili</li>
-            <li class="off">Esercizi guidati interattivi</li>
-            <li class="off">Quiz approfondito</li>
-          </ul>
-          <button class="piano-btn primary" onclick="openWaitlist('Essenziale', '€7/mese')">Inizia ora →</button>
-        </div>
-
-        <!-- PROFONDA -->
-        <div class="piano-card profonda featured">
-          <div class="piano-badge">✦ consigliato</div>
-          <div class="piano-name">Clara Profonda</div>
-          <div class="piano-price">€12 <span>/ mese</span></div>
-          <div class="piano-annual">oppure €99/anno — risparmi il 30%</div>
-          <ul class="piano-features">
-            <li class="on">Tutto di Essenziale</li>
-            <li class="on">14 esercizi guidati interattivi</li>
-            <li class="on">Quiz approfondito sullo stile</li>
-            <li class="on">Promemoria ed esercizi settimanali</li>
-            <li class="on">Sezione progressi personali</li>
-            <li class="on">Accesso anticipato a nuovi contenuti</li>
-          </ul>
-          <button class="piano-btn primary" onclick="openWaitlist('Profonda', '€12/mese')">Inizia ora →</button>
-        </div>
-
-      </div>
-
-      <!-- FAQ -->
-      <div class="piani-faq">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--charcoal);margin-bottom:32px;text-align:center">Domande frequenti</div>
-
-        <div class="faq-item">
-          <div class="faq-q">Posso cancellare quando voglio?</div>
-          <div class="faq-a">Sì, puoi cancellare in qualsiasi momento dal tuo profilo. Non ci sono penali o vincoli. Se cancelli, l'abbonamento rimane attivo fino alla fine del periodo già pagato.</div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-q">Clara sostituisce un terapeuta?</div>
-          <div class="faq-a">No — e non vuole farlo. Clara è una compagna di esplorazione emotiva, non una sostituta della terapia professionale. Se stai attraversando un momento di crisi, ti invitiamo a rivolgerti a un professionista della salute mentale.</div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-q">I miei dati sono al sicuro?</div>
-          <div class="faq-a">Le tue conversazioni con Clara sono private e salvate solo sul tuo dispositivo. Non condividiamo i tuoi dati con terze parti e non usiamo le conversazioni per addestrare modelli AI.</div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-q">Cosa succede dopo i 7 giorni di prova?</div>
-          <div class="faq-a">Dopo il trial puoi continuare a usare Clara gratuitamente con 3 messaggi al giorno, oppure scegliere un piano per sbloccare tutte le funzionalità. Non ti verrà addebitato nulla automaticamente.</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- WAITLIST MODAL -->
-  <div class="waitlist-overlay" id="waitlistOverlay" onclick="closeWaitlistOnOverlay(event)">
-    <div class="waitlist-modal">
-      <h3 id="waitlistTitle">Unisciti alla lista</h3>
-      <p id="waitlistDesc">I pagamenti saranno disponibili a breve. Lascia la tua email e ti avviseremo appena puoi attivare il piano — con uno sconto di benvenuto.</p>
-      <input class="waitlist-input" type="text" id="waitlistName" placeholder="Il tuo nome" />
-      <input class="waitlist-input" type="email" id="waitlistEmail" placeholder="La tua email" />
-      <div id="waitlistMsg" style="display:none;background:rgba(124,232,168,0.15);border:1px solid rgba(124,232,168,0.3);border-radius:12px;padding:12px 16px;font-size:13px;color:#085041;margin-bottom:12px;"></div>
-      <button class="waitlist-submit" onclick="submitWaitlist()">Avvisami quando è disponibile →</button>
-      <button class="waitlist-cancel" onclick="closeWaitlist()">Annulla</button>
-    </div>
-  </div>
-
-</main>
-
-<script>
 // ─── CONSTANTS ───
 const FREE_DAILY_LIMIT = 3;
 const TRIAL_DAYS = 7;
@@ -589,6 +127,10 @@ let isStreaming = false;
 // ─── LOCALSTORAGE ───
 function saveState() {
   localStorage.setItem('clara_state', JSON.stringify({ conversationHistory, userStyle, onboardingDone: true, trialStart: getTrialStart() }));
+  // Sincronizza stile con Supabase
+  if (userStyle && currentUser) {
+    saveProfile({ stile_attaccamento: userStyle });
+  }
 }
 
 function loadState() {
@@ -744,6 +286,8 @@ function computeResult() {
 function startApp() {
   document.getElementById('onboarding').classList.add('hidden');
   updateSidebarUser();
+  // Salva stile su Supabase
+  if (currentUser) saveProfile({ stile_attaccamento: userStyle, trial_start: new Date().toISOString() });
   const data = STYLES_DATA[userStyle];
   const welcome = `Ho letto il tuo profilo. ${data.emoji}\n\nIl tuo stile emergente è quello ${data.title.toLowerCase()} — e capisco quanto possa essere faticoso portare certi pattern nelle relazioni.\n\nSono qui per te. Puoi iniziare raccontandomi qualcosa che senti in questo momento, oppure chiedermi di guidarti in un esercizio. ✦`;
   appendMessage('clara', welcome);
@@ -1144,6 +688,131 @@ function submitWaitlist() {
   setTimeout(() => closeWaitlist(), 3000);
 }
 
+
+// ─── AUTH SCREEN ───
+function showAuthScreen() {
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  let authEl = document.getElementById('authScreen');
+  if (!authEl) {
+    authEl = document.createElement('div');
+    authEl.id = 'authScreen';
+    authEl.style.cssText = 'position:fixed;inset:0;background:var(--cream);z-index:3000;display:flex;align-items:center;justify-content:center;padding:24px;';
+    authEl.innerHTML = `
+      <div style="background:white;border-radius:28px;padding:48px;max-width:480px;width:100%;box-shadow:0 8px 48px rgba(44,40,37,0.12);border:1px solid var(--light-border);animation:slideUp 0.5s ease">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--charcoal);margin-bottom:4px">Clara</div>
+        <div style="font-size:11px;color:var(--warm-gray);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px">La tua guida emotiva</div>
+
+        <div id="authTabs" style="display:flex;gap:0;margin-bottom:28px;border:1px solid var(--light-border);border-radius:12px;overflow:hidden">
+          <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:10px;background:var(--charcoal);color:var(--cream);border:none;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s">Accedi</button>
+          <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;padding:10px;background:transparent;color:var(--warm-gray);border:none;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s">Registrati</button>
+        </div>
+
+        <div id="authFormSignup" style="display:none">
+          <input id="authName" type="text" placeholder="Il tuo nome" style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'"/>
+        </div>
+
+        <input id="authEmail" type="email" placeholder="La tua email" style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'" onkeydown="if(event.key==='Enter')submitAuth()"/>
+        <input id="authPassword" type="password" placeholder="Password (min. 8 caratteri)" style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'" onkeydown="if(event.key==='Enter')submitAuth()"/>
+
+        <div id="authError" style="display:none;font-size:12px;color:var(--deep-rose);margin-bottom:12px;padding:10px 14px;background:rgba(160,101,90,0.08);border-radius:10px"></div>
+
+        <button onclick="submitAuth()" style="width:100%;padding:16px;background:var(--charcoal);color:var(--cream);border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.2s;margin-bottom:12px" onmouseover="this.style.background='var(--deep-rose)'" onmouseout="this.style.background='var(--charcoal)'" id="authSubmitBtn">Accedi →</button>
+
+        <div id="authNote" style="text-align:center;font-size:11px;color:var(--warm-gray);opacity:0.7">7 giorni gratuiti · Nessuna carta richiesta</div>
+      </div>`;
+    document.body.appendChild(authEl);
+  }
+  authEl.style.display = 'flex';
+}
+
+let authMode = 'login';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('authFormSignup').style.display = isSignup ? 'block' : 'none';
+  document.getElementById('tabLogin').style.background = isSignup ? 'transparent' : 'var(--charcoal)';
+  document.getElementById('tabLogin').style.color = isSignup ? 'var(--warm-gray)' : 'var(--cream)';
+  document.getElementById('tabSignup').style.background = isSignup ? 'var(--charcoal)' : 'transparent';
+  document.getElementById('tabSignup').style.color = isSignup ? 'var(--cream)' : 'var(--warm-gray)';
+  document.getElementById('authSubmitBtn').textContent = isSignup ? 'Crea il tuo account →' : 'Accedi →';
+  document.getElementById('authNote').textContent = isSignup ? '7 giorni gratuiti · Nessuna carta richiesta' : 'Bentornata — Clara ti ha aspettata.';
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function submitAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const errorEl = document.getElementById('authError');
+  const btn = document.getElementById('authSubmitBtn');
+
+  if (!email || !password) {
+    errorEl.textContent = 'Inserisci email e password.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Un momento...';
+  btn.disabled = true;
+  errorEl.style.display = 'none';
+
+  if (authMode === 'signup') {
+    const nome = document.getElementById('authName')?.value.trim() || '';
+    if (!nome) {
+      errorEl.textContent = 'Inserisci il tuo nome.';
+      errorEl.style.display = 'block';
+      btn.textContent = 'Crea il tuo account →';
+      btn.disabled = false;
+      return;
+    }
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      errorEl.textContent = error.message === 'User already registered' ? 'Email già registrata. Prova ad accedere.' : error.message;
+      errorEl.style.display = 'block';
+      btn.textContent = 'Crea il tuo account →';
+      btn.disabled = false;
+      return;
+    }
+    // Salva nome nel profilo
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      await supabase.from('profiles').update({ nome }).eq('id', currentUser.id);
+      await loadProfile();
+    }
+  } else {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = 'Email o password non corretti.';
+      errorEl.style.display = 'block';
+      btn.textContent = 'Accedi →';
+      btn.disabled = false;
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      await loadProfile();
+    }
+  }
+
+  // Login/signup riuscito
+  document.getElementById('authScreen').style.display = 'none';
+  const state = loadState();
+  if (state && state.onboardingDone) {
+    document.getElementById('onboarding').classList.add('hidden');
+    userStyle = state.userStyle || userStyle;
+    await loadConversationsFromCloud();
+    if (conversationHistory.length === 0 && state.conversationHistory?.length > 0) {
+      conversationHistory = state.conversationHistory;
+      restoreMessages();
+    }
+    updateSidebarUser();
+  }
+  updateCounter();
+}
+
 // ─── RESET ONBOARDING ───
 function resetOnboarding() {
   if (!confirm('Vuoi rifare il test? La conversazione attuale verrà mantenuta, ma il tuo profilo verrà ricalcolato.')) return;
@@ -1167,15 +836,35 @@ function resetOnboarding() {
 }
 
 // ─── INIT ───
-function init() {
-  const state = loadState();
-  if (state && state.onboardingDone) {
-    document.getElementById('onboarding').classList.add('hidden');
-    conversationHistory = state.conversationHistory || [];
-    userStyle = state.userStyle || null;
-    if (conversationHistory.length > 0) restoreMessages();
-    updateSidebarUser();
+async function init() {
+  // Registra service worker PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
+
+  // Controlla se c'è una sessione Supabase attiva
+  const hasSession = await initSupabase();
+
+  if (hasSession) {
+    // Utente loggato — nascondi auth screen
+    document.getElementById('authScreen') && (document.getElementById('authScreen').style.display = 'none');
+    const state = loadState();
+    if (state && state.onboardingDone) {
+      document.getElementById('onboarding').classList.add('hidden');
+      userStyle = state.userStyle || userStyle;
+      // Carica conversazioni dal cloud (hanno la precedenza sul localStorage)
+      await loadConversationsFromCloud();
+      if (conversationHistory.length === 0 && state.conversationHistory?.length > 0) {
+        conversationHistory = state.conversationHistory;
+        restoreMessages();
+      }
+      updateSidebarUser();
+    }
+  } else {
+    // Nessuna sessione — mostra schermata auth
+    showAuthScreen();
+  }
+
   renderProgress();
   updateCounter();
 }
@@ -1333,7 +1022,9 @@ async function sendMessage() {
   input.value = ''; input.style.height = 'auto';
 
   appendMessage('user', text);
-  conversationHistory.push({role:'user',content:text,ts:Date.now()});
+  const userTs = Date.now();
+  conversationHistory.push({role:'user',content:text,ts:userTs});
+  saveMessageToCloud('user', text, userTs);
   incrementMsgCount();
   updateCounter();
   showTyping();
@@ -1378,7 +1069,9 @@ Rispondi sempre in italiano.`;
 
     const reply = data.content?.[0]?.text || 'Mi dispiace, non sono riuscita a rispondere. Puoi riprovare?';
     appendMessage('clara', reply);
-    conversationHistory.push({role:'assistant',content:reply,ts:Date.now()});
+    const claraTs = Date.now();
+    conversationHistory.push({role:'assistant',content:reply,ts:claraTs});
+    saveMessageToCloud('assistant', reply, claraTs);
     saveState();
 
   } catch(err) {
@@ -1610,10 +1303,6 @@ function checkApiKey() {
 }
 
 // ─── START ───
-if (!checkApiKey()) { /* aspetta inserimento chiave */ } else { init(); }
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js"></script>
-</body>
-</html>
+// La chiave API è hardcoded nel proxy Cloudflare — non serve più chiederla
+document.getElementById('apiKeyScreen').style.display = 'none';
+init();
