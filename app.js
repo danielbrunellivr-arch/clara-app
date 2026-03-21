@@ -844,6 +844,7 @@ async function init() {
 
   // Controlla se c'è una sessione Supabase attiva
   const hasSession = await initSupabase();
+  if (!hasSession) { showAuthScreen(); return; }
 
   if (hasSession) {
     // Utente loggato — nascondi auth screen
