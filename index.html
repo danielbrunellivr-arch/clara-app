@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clara — La tua guida emotiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FAF7F2;
+    --blush: #E8D5C4;
+    --rose: #C4897A;
+    --deep-rose: #A0655A;
+    --sage: #8A9E8C;
+    --deep-sage: #5C7A5E;
+    --charcoal: #2C2825;
+    --warm-gray: #6B6560;
+    --light-border: rgba(196, 137, 122, 0.2);
+    --shadow: rgba(44, 40, 37, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); height: 100vh; overflow: hidden; display: flex; }
+
+  /* ── ONBOARDING ── */
+  #onboarding { position: fixed; inset: 0; background: var(--cream); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #onboarding.hidden { display: none; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .onboarding-card { background: white; border-radius: 28px; padding: 48px; max-width: 560px; width: 100%; box-shadow: 0 8px 48px rgba(44,40,37,0.12); border: 1px solid var(--light-border); animation: slideUp 0.5s ease; }
+  .onboarding-logo { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--charcoal); margin-bottom: 4px; }
+  .onboarding-tagline { font-size: 13px; color: var(--warm-gray); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 32px; }
+  .ob-step { display: none; }
+  .ob-step.active { display: block; animation: slideUp 0.35s ease; }
+  .ob-question { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; line-height: 1.35; color: var(--charcoal); margin-bottom: 8px; }
+  .ob-sub { font-size: 13px; color: var(--warm-gray); margin-bottom: 24px; line-height: 1.6; }
+  .ob-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .ob-option { padding: 14px 18px; border: 1.5px solid var(--light-border); border-radius: 14px; cursor: pointer; font-size: 14px; color: var(--charcoal); transition: all 0.2s; background: var(--warm-white); line-height: 1.4; }
+  .ob-option:hover { border-color: var(--rose); background: white; transform: translateX(4px); }
+  .ob-option.selected { border-color: var(--rose); background: white; box-shadow: 0 0 0 3px rgba(196,137,122,0.12); }
+  .ob-progress { display: flex; gap: 6px; margin-bottom: 28px; }
+  .ob-dot { height: 3px; flex: 1; border-radius: 2px; background: var(--blush); transition: background 0.3s; }
+  .ob-dot.done { background: var(--rose); }
+  .ob-nav { display: flex; justify-content: space-between; align-items: center; }
+  .ob-btn-back { font-size: 13px; color: var(--warm-gray); background: none; border: none; cursor: pointer; padding: 8px 0; opacity: 0.7; transition: opacity 0.2s; }
+  .ob-btn-back:hover { opacity: 1; }
+  .ob-btn-next { padding: 12px 28px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .ob-btn-next:hover { background: var(--deep-rose); }
+  .ob-btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ob-result-badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px; border-radius: 30px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
+  .ob-result-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; line-height: 1.25; color: var(--charcoal); margin-bottom: 14px; }
+  .ob-result-desc { font-size: 14px; line-height: 1.7; color: var(--warm-gray); margin-bottom: 24px; }
+  .ob-books { background: var(--cream); border-radius: 16px; padding: 18px; margin-bottom: 28px; }
+  .ob-books-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rose); margin-bottom: 12px; }
+  .ob-book-item { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--light-border); }
+  .ob-book-item:last-child { border-bottom: none; }
+  .ob-book-emoji { font-size: 20px; flex-shrink: 0; }
+  .ob-book-info h4 { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 400; color: var(--charcoal); }
+  .ob-book-info p { font-size: 12px; color: var(--warm-gray); margin-top: 2px; }
+  .ob-cta { width: 100%; padding: 16px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em; }
+  .ob-cta:hover { background: var(--deep-rose); transform: translateY(-1px); }
+  .ob-trial-note { text-align: center; font-size: 11px; color: var(--warm-gray); margin-top: 12px; opacity: 0.7; }
+
+  /* ── HAMBURGER ── */
+  .hamburger { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; width: 40px; height: 40px; background: var(--charcoal); border: none; border-radius: 10px; cursor: pointer; flex-direction: column; align-items: center; justify-content: center; gap: 5px; transition: background 0.2s; }
+  .hamburger:hover { background: var(--deep-rose); }
+  .hamburger span { display: block; width: 18px; height: 1.5px; background: var(--cream); border-radius: 2px; transition: all 0.25s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(44,40,37,0.5); z-index: 99; }
+  .sidebar-overlay.visible { display: block; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 260px; min-width: 260px; background: var(--charcoal); display: flex; flex-direction: column; padding: 0; position: relative; overflow: hidden; transition: transform 0.3s ease; z-index: 100; }
+  .sidebar::before { content: ''; position: absolute; top: -80px; right: -80px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(196,137,122,0.15) 0%, transparent 70%); border-radius: 50%; }
+  .sidebar-logo { padding: 32px 28px 24px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .logo-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--cream); letter-spacing: 0.05em; }
+  .logo-tagline { font-size: 11px; color: rgba(245,240,232,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px; }
+  .nav-section { padding: 20px 0; flex: 1; }
+  .nav-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(245,240,232,0.3); padding: 0 28px; margin-bottom: 8px; margin-top: 16px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 28px; cursor: pointer; transition: all 0.2s ease; border-left: 2px solid transparent; color: rgba(245,240,232,0.55); font-size: 13.5px; font-weight: 400; }
+  .nav-item:hover { background: rgba(245,240,232,0.05); color: rgba(245,240,232,0.85); border-left-color: rgba(196,137,122,0.4); }
+  .nav-item.active { background: rgba(196,137,122,0.12); color: var(--blush); border-left-color: var(--rose); }
+  .nav-icon { width: 18px; height: 18px; opacity: 0.7; flex-shrink: 0; }
+  .attachment-section { padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+  .attachment-pill { display: flex; align-items: center; gap: 10px; padding: 10px 28px; cursor: pointer; transition: all 0.2s; font-size: 13px; color: rgba(245,240,232,0.5); }
+  .attachment-pill:hover { background: rgba(245,240,232,0.05); color: rgba(245,240,232,0.8); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ansioso { background: #E8A87C; }
+  .dot-evitante { background: #7CB9E8; }
+  .dot-disorganizzato { background: #B87CE8; }
+  .dot-sicuro { background: #7CE8A8; }
+  .sidebar-bottom { padding: 20px 28px; border-top: 1px solid rgba(255,255,255,0.07); }
+  .user-pill { display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--rose), var(--sage)); display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; font-weight: 500; }
+  .user-info { flex: 1; }
+  .user-name { font-size: 13px; color: var(--cream); opacity: 0.8; }
+  .user-status { font-size: 11px; color: rgba(245,240,232,0.3); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--warm-white); }
+  .view { display: none; flex-direction: column; height: 100%; }
+  .view.active { display: flex; }
+
+  /* ── CHAT ── */
+  .chat-header { padding: 20px 32px; background: var(--warm-white); border-bottom: 1px solid var(--light-border); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .clara-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--blush) 0%, var(--rose) 60%, var(--deep-sage) 100%); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; font-weight: 400; flex-shrink: 0; position: relative; }
+  .clara-avatar::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: #7CE8A8; border-radius: 50%; border: 2px solid var(--warm-white); }
+  .chat-header-info h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--charcoal); }
+  .chat-header-info p { font-size: 12px; color: var(--warm-gray); margin-top: 1px; }
+  .msg-counter { margin-left: auto; font-size: 12px; color: var(--warm-gray); background: var(--cream); border: 1px solid var(--light-border); border-radius: 20px; padding: 5px 14px; white-space: nowrap; }
+  .msg-counter.warning { color: var(--deep-rose); border-color: rgba(160,101,90,0.3); background: rgba(232,213,196,0.3); }
+
+  .messages-area { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+  .messages-area::-webkit-scrollbar { width: 4px; }
+  .messages-area::-webkit-scrollbar-track { background: transparent; }
+  .messages-area::-webkit-scrollbar-thumb { background: var(--blush); border-radius: 2px; }
+
+  .message { display: flex; gap: 12px; max-width: 75%; animation: fadeInUp 0.3s ease; }
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .message-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; margin-top: 2px; }
+  .message.clara .message-avatar { background: linear-gradient(135deg, var(--blush), var(--rose)); color: white; font-family: 'Cormorant Garamond', serif; font-size: 14px; }
+  .message.user .message-avatar { background: linear-gradient(135deg, var(--sage), var(--deep-sage)); color: white; }
+  .message-bubble { padding: 14px 18px; border-radius: 18px; font-size: 14px; line-height: 1.65; color: var(--charcoal); }
+  .message.clara .message-bubble { background: white; border-bottom-left-radius: 4px; box-shadow: 0 2px 12px var(--shadow); border: 1px solid rgba(196,137,122,0.1); }
+  .message.user .message-bubble { background: var(--charcoal); color: var(--cream); border-bottom-right-radius: 4px; }
+  .message-time { font-size: 10px; color: var(--warm-gray); opacity: 0.6; margin-top: 5px; padding: 0 4px; }
+  .message.user .message-time { text-align: right; }
+
+  .cursor { display: inline-block; width: 2px; height: 14px; background: var(--rose); margin-left: 2px; vertical-align: middle; animation: blink 0.8s step-end infinite; }
+
+  .typing-indicator { display: flex; gap: 12px; max-width: 75%; animation: fadeInUp 0.3s ease; }
+  .typing-bubble { background: white; border: 1px solid rgba(196,137,122,0.1); box-shadow: 0 2px 12px var(--shadow); padding: 16px 20px; border-radius: 18px; border-bottom-left-radius: 4px; display: flex; align-items: center; gap: 5px; }
+  .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rose); opacity: 0.5; animation: typingBounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:0.5} 30%{transform:translateY(-5px);opacity:1} }
+
+  /* ── INPUT ── */
+  .input-area { padding: 20px 32px 24px; background: var(--warm-white); border-top: 1px solid var(--light-border); flex-shrink: 0; }
+  .limit-banner { display: none; background: white; border: 1.5px solid var(--light-border); border-radius: 16px; padding: 20px 24px; text-align: center; box-shadow: 0 2px 16px var(--shadow); }
+  .limit-banner.visible { display: block; }
+  .limit-banner h4 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--charcoal); margin-bottom: 6px; }
+  .limit-banner p { font-size: 13px; color: var(--warm-gray); margin-bottom: 16px; line-height: 1.6; }
+  .limit-banner-btns { display: flex; gap: 10px; justify-content: center; }
+  .btn-upgrade { padding: 10px 22px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-upgrade:hover { background: var(--deep-rose); }
+  .btn-tomorrow { padding: 10px 16px; background: transparent; color: var(--warm-gray); border: 1px solid var(--light-border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-tomorrow:hover { border-color: var(--rose); color: var(--charcoal); }
+  .input-wrapper { display: flex; align-items: flex-end; gap: 12px; background: white; border: 1px solid var(--light-border); border-radius: 16px; padding: 12px 16px; box-shadow: 0 2px 16px var(--shadow); transition: border-color 0.2s; }
+  .input-wrapper:focus-within { border-color: var(--rose); box-shadow: 0 2px 16px var(--shadow), 0 0 0 3px rgba(196,137,122,0.1); }
+  #messageInput { flex: 1; border: none; outline: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal); resize: none; max-height: 120px; line-height: 1.5; min-height: 22px; }
+  #messageInput::placeholder { color: rgba(107,101,96,0.5); }
+  .send-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--charcoal); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .send-btn:hover { background: var(--deep-rose); transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 16px; height: 16px; fill: white; }
+  .input-hint { font-size: 11px; color: rgba(107,101,96,0.45); text-align: center; margin-top: 10px; letter-spacing: 0.02em; }
+
+  /* ── CONTENT VIEWS ── */
+  .content-view { flex: 1; overflow-y: auto; padding: 40px 48px; }
+  .content-view::-webkit-scrollbar { width: 4px; }
+  .content-view::-webkit-scrollbar-thumb { background: var(--blush); border-radius: 2px; }
+  .page-header { margin-bottom: 40px; }
+  .page-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--charcoal); line-height: 1.2; }
+  .page-header p { font-size: 14px; color: var(--warm-gray); margin-top: 10px; line-height: 1.6; max-width: 520px; }
+  .reflection-card { background: white; border: 1px solid var(--light-border); border-radius: 20px; padding: 28px; margin-bottom: 20px; box-shadow: 0 2px 16px var(--shadow); animation: fadeInUp 0.4s ease; }
+  .reflection-card .card-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--rose); margin-bottom: 12px; }
+  .reflection-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; margin-bottom: 10px; color: var(--charcoal); }
+  .reflection-card p { font-size: 13.5px; line-height: 1.7; color: var(--warm-gray); }
+  .style-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-top: 12px; letter-spacing: 0.04em; }
+  .tag-ansioso { background: rgba(232,168,124,0.15); color: #B8733A; }
+  .tag-evitante { background: rgba(124,185,232,0.15); color: #3A7AB8; }
+  .tag-disorganizzato { background: rgba(184,124,232,0.15); color: #7A3AB8; }
+  .tag-sicuro { background: rgba(124,232,168,0.15); color: #3AB870; }
+  .tag-misto { background: rgba(196,137,122,0.15); color: #8B4F3A; }
+  .analyze-btn { display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; margin-bottom: 32px; }
+  .analyze-btn:hover { background: var(--deep-rose); transform: translateY(-1px); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .books-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .book-card { background: white; border: 1px solid var(--light-border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+  .book-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px var(--shadow); }
+  .book-spine { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+  .book-info { padding: 18px; }
+  .book-info h4 { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; margin-bottom: 5px; color: var(--charcoal); }
+  .book-info .author { font-size: 12px; color: var(--warm-gray); margin-bottom: 10px; }
+  .book-info p { font-size: 12px; line-height: 1.6; color: var(--warm-gray); opacity: 0.8; }
+  .book-tag { display: inline-block; margin-top: 12px; font-size: 10px; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
+
+  /* ── PROGRESSI ── */
+  .prog-parola {
+    background: var(--charcoal);
+    border-radius: 20px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .prog-parola::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(196,137,122,0.2) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .prog-parola-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.4);
+    margin-bottom: 12px;
+  }
+  .prog-parola-testo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.3;
+  }
+  .prog-narrativa {
+    background: white;
+    border: 1px solid var(--light-border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 16px var(--shadow);
+  }
+  .prog-narrativa-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 16px;
+  }
+  .prog-narrativa-testo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.85;
+    color: var(--charcoal);
+  }
+  .prog-firma {
+    font-size: 12px;
+    color: var(--rose);
+    margin-top: 16px;
+  }
+  .prog-temi {
+    background: white;
+    border: 1px solid var(--light-border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 16px var(--shadow);
+  }
+  .prog-tema-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--light-border);
+  }
+  .prog-tema-item:last-child { border-bottom: none; }
+  .prog-tema-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rose);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .prog-tema-testo { font-size: 14px; line-height: 1.6; color: var(--charcoal); }
+  .prog-incoraggiamento {
+    background: linear-gradient(135deg, var(--cream), white);
+    border: 1px solid var(--light-border);
+    border-left: 3px solid var(--sage);
+    border-radius: 0 20px 20px 0;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 16px var(--shadow);
+  }
+
+  /* ── PIANI ── */
+  .piani-hero { text-align: center; padding: 40px 20px 32px; border-bottom: 1px solid var(--light-border); margin-bottom: 40px; }
+  .piani-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--charcoal); line-height: 1.2; margin-bottom: 12px; }
+  .piani-hero p { font-size: 14px; color: var(--warm-gray); line-height: 1.7; max-width: 480px; margin: 0 auto; }
+  .piani-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 48px; }
+  .piano-card { background: white; border: 1px solid var(--light-border); border-radius: 24px; padding: 32px 28px; position: relative; overflow: hidden; box-shadow: 0 2px 16px var(--shadow); transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
+  .piano-features { flex: 1; list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }  .piano-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--shadow); }
+  .piano-card.featured { border-color: var(--rose); box-shadow: 0 4px 24px rgba(196,137,122,0.15); }
+  .piano-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--light-border); }
+  .piano-card.free::before { background: linear-gradient(90deg, #D3D1C7, #B4B2A9); }
+  .piano-card.essenziale::before { background: linear-gradient(90deg, #7CB9E8, #5DCAA5); }
+  .piano-card.profonda::before { background: linear-gradient(90deg, var(--rose), var(--deep-sage)); }
+  .piano-badge { position: absolute; top: 20px; right: 20px; background: var(--rose); color: white; font-size: 10px; font-weight: 500; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
+  .piano-name { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--warm-gray); margin-bottom: 8px; }
+  .piano-price { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--charcoal); line-height: 1; margin-bottom: 4px; }
+  .piano-price span { font-size: 16px; color: var(--warm-gray); }
+  .piano-annual { font-size: 12px; color: var(--warm-gray); margin-bottom: 24px; min-height: 18px; }
+  .piano-features li { font-size: 13px; color: var(--charcoal); display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .piano-features li::before { content: ''; width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+  .piano-features li.on::before { background: #7CE8A8; background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 5l2 2 4-4' stroke='%23085041' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+  .piano-features li.off { color: var(--warm-gray); opacity: 0.5; }
+  .piano-features li.off::before { background: var(--blush); }
+  .piano-btn { width: 100%; padding: 14px; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; }
+  .piano-btn.primary { background: var(--charcoal); color: var(--cream); }
+  .piano-btn.primary:hover { background: var(--deep-rose); }
+  .piano-btn.secondary { background: transparent; color: var(--charcoal); border: 1.5px solid var(--light-border); }
+  .piano-btn.secondary:hover { border-color: var(--rose); }
+  .piano-btn.current { background: var(--cream); color: var(--warm-gray); cursor: default; }
+  .piani-faq { max-width: 640px; margin: 0 auto; }
+  .faq-item { border-bottom: 1px solid var(--light-border); padding: 20px 0; }
+  .faq-q { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--charcoal); margin-bottom: 8px; }
+  .faq-a { font-size: 13.5px; color: var(--warm-gray); line-height: 1.7; }
+
+  /* Waitlist modal */
+  .waitlist-overlay { display: none; position: fixed; inset: 0; background: rgba(44,40,37,0.6); z-index: 600; align-items: center; justify-content: center; padding: 24px; }
+  .waitlist-overlay.open { display: flex; }
+  .waitlist-modal { background: var(--warm-white); border-radius: 24px; max-width: 480px; width: 100%; padding: 40px; box-shadow: 0 16px 64px rgba(44,40,37,0.2); animation: slideUp 0.3s ease; }
+  .waitlist-modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--charcoal); margin-bottom: 8px; }
+  .waitlist-modal p { font-size: 14px; color: var(--warm-gray); line-height: 1.6; margin-bottom: 24px; }
+  .waitlist-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-border); border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal); background: white; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+  .waitlist-input:focus { border-color: var(--rose); }
+  .waitlist-submit { width: 100%; padding: 14px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+  .waitlist-submit:hover { background: var(--deep-rose); }
+  .waitlist-cancel { width: 100%; padding: 10px; background: transparent; color: var(--warm-gray); border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+
+  /* ── ESERCIZI ── */
+  .ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .ex-card { background: white; border: 1px solid var(--light-border); border-radius: 18px; padding: 22px; cursor: pointer; transition: all 0.25s; box-shadow: 0 2px 12px var(--shadow); position: relative; overflow: hidden; }
+  .ex-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .ex-card.ansioso::before { background: #E8A87C; }
+  .ex-card.evitante::before { background: #7CB9E8; }
+  .ex-card.disorganizzato::before { background: #B87CE8; }
+  .ex-card.sicuro::before { background: #7CE8A8; }
+  .ex-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px var(--shadow); }
+  .ex-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 500; margin-bottom: 10px; letter-spacing: 0.05em; }
+  .ex-card h4 { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--charcoal); margin-bottom: 6px; }
+  .ex-card p { font-size: 13px; line-height: 1.6; color: var(--warm-gray); margin-bottom: 12px; }
+  .ex-meta { font-size: 11px; color: var(--warm-gray); opacity: 0.6; }
+  .ex-section-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--charcoal); margin: 32px 0 16px; display: flex; align-items: center; gap: 10px; }
+  .ex-section-title span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  /* Modal esercizio */
+  .ex-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(44,40,37,0.6); z-index: 500; align-items: center; justify-content: center; padding: 24px; }
+  .ex-modal-overlay.open { display: flex; }
+  .ex-modal { background: var(--warm-white); border-radius: 24px; max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 64px rgba(44,40,37,0.2); animation: slideUp 0.3s ease; }
+  .ex-modal-header { padding: 28px 32px 0; }
+  .ex-modal-body { padding: 0 32px 28px; }
+  .ex-step { display: none; }
+  .ex-step.active { display: block; animation: fadeInUp 0.3s ease; }
+  .ex-step-text { font-size: 15px; line-height: 1.8; color: var(--charcoal); margin: 16px 0; }
+  .ex-step-question { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--charcoal); line-height: 1.4; margin: 20px 0 12px; }
+  .ex-textarea { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-border); border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal); background: white; outline: none; resize: none; min-height: 100px; line-height: 1.6; transition: border-color 0.2s; }
+  .ex-textarea:focus { border-color: var(--rose); }
+  .ex-progress-bar { height: 3px; background: var(--blush); border-radius: 2px; margin: 20px 0 0; overflow: hidden; }
+  .ex-progress-fill { height: 100%; background: var(--rose); border-radius: 2px; transition: width 0.4s ease; }
+  .ex-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--light-border); }
+  .ex-btn-next { padding: 12px 24px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .ex-btn-next:hover { background: var(--deep-rose); }
+  .ex-btn-back { font-size: 13px; color: var(--warm-gray); background: none; border: none; cursor: pointer; padding: 8px 0; opacity: 0.7; }
+  .ex-btn-back:hover { opacity: 1; }
+  .ex-complete { text-align: center; padding: 20px 0; }
+  .ex-complete-icon { font-size: 48px; margin-bottom: 16px; }
+  .ex-complete h3 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--charcoal); margin-bottom: 10px; }
+  .ex-complete p { font-size: 14px; color: var(--warm-gray); line-height: 1.7; margin-bottom: 24px; }
+  .ex-chat-btn { padding: 12px 24px; background: var(--charcoal); color: var(--cream); border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; margin-right: 10px; }
+  .ex-chat-btn:hover { background: var(--deep-rose); }
+  .ex-close-btn { padding: 12px 20px; background: transparent; color: var(--warm-gray); border: 1px solid var(--light-border); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .ex-close-btn:hover { border-color: var(--rose); color: var(--charcoal); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(44,40,37,0.2); }
+    .chat-header { padding: 20px 20px 20px 68px; }
+    .messages-area { padding: 20px; }
+    .input-area { padding: 12px 16px 20px; }
+    .content-view { padding: 24px 20px 24px 68px; }
+    .books-grid { grid-template-columns: 1fr 1fr; }
+    .onboarding-card { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- API KEY SCREEN -->
+<div id="apiKeyScreen" style="position:fixed;inset:0;background:var(--cream);z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:28px;padding:48px;max-width:480px;width:100%;box-shadow:0 8px 48px rgba(44,40,37,0.12);border:1px solid var(--light-border);animation:slideUp 0.5s ease;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--charcoal);margin-bottom:4px;">Clara</div>
+    <div style="font-size:11px;color:var(--warm-gray);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px;">Configurazione iniziale</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--charcoal);margin-bottom:10px;">Inserisci la tua API key</div>
+    <div style="font-size:13px;color:var(--warm-gray);line-height:1.6;margin-bottom:24px;">Per far funzionare Clara hai bisogno di una chiave API di Anthropic. La trovi su <strong>console.anthropic.com</strong> → API Keys. Inizia con <code style="background:var(--cream);padding:2px 6px;border-radius:4px;font-size:12px;">sk-ant-...</code></div>
+    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." style="width:100%;padding:14px 16px;border:1.5px solid var(--light-border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--warm-white);outline:none;margin-bottom:12px;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--light-border)'" onkeydown="if(event.key==='Enter')saveApiKey()"/>
+    <div id="apiKeyError" style="font-size:12px;color:var(--deep-rose);margin-bottom:12px;display:none;">Chiave non valida — deve iniziare con sk-ant-</div>
+    <button onclick="saveApiKey()" style="width:100%;padding:16px;background:var(--charcoal);color:var(--cream);border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--deep-rose)'" onmouseout="this.style.background='var(--charcoal)'">Inizia con Clara →</button>
+    <div style="text-align:center;font-size:11px;color:var(--warm-gray);margin-top:12px;opacity:0.7;">La chiave viene salvata solo sul tuo dispositivo</div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onboarding-card">
+    <div class="onboarding-logo">Clara</div>
+    <div class="onboarding-tagline">La tua guida emotiva</div>
+    <div class="ob-progress" id="obProgress"></div>
+
+    <div class="ob-step active" id="ob-step-0">
+      <div class="ob-question">Benvenuta. Sono Clara.</div>
+      <div class="ob-sub">Sono qui per accompagnarti nell’esplorazione dei tuoi pattern emotivi e relazionali — con cura, senza giudizi.<br><br>Ti farò 8 domande per conoscerti meglio e costruire il tuo profilo di attaccamento. Ci vogliono circa 3 minuti.</div>
+      <div class="ob-nav" style="justify-content:flex-end">
+        <button class="ob-btn-next" onclick="obNext()">Iniziamo →</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-1">
+      <div class="ob-question">Quando qualcuno che ami si allontana o non risponde, come reagisci?</div>
+      <div class="ob-sub">Non c’è risposta giusta o sbagliata — scegli la più spontanea.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="1" data-val="D" onclick="selectOption(this)">Mi fido che sia temporaneo — gli do spazio senza ansia</div>
+        <div class="ob-option" data-step="1" data-val="A" onclick="selectOption(this)">Mi preoccupo molto — mi chiedo se ho fatto qualcosa di sbagliato</div>
+        <div class="ob-option" data-step="1" data-val="B" onclick="selectOption(this)">Non ci penso più di tanto — ho bisogno del mio spazio</div>
+        <div class="ob-option" data-step="1" data-val="C" onclick="selectOption(this)">Mi sento in balia delle emozioni — voglio avvicinarmi e scappare allo stesso tempo</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-1">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-2">
+      <div class="ob-question">Quando ti senti ferita in una relazione, qual è la tua prima reazione?</div>
+      <div class="ob-sub">Osserva la risposta più istintiva, non quella che vorresti avere.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="2" data-val="B" onclick="selectOption(this)">Mi chiudo — preferisco stare sola a elaborare</div>
+        <div class="ob-option" data-step="2" data-val="D" onclick="selectOption(this)">Cerco di capire cosa è successo con calma, anche se fa male</div>
+        <div class="ob-option" data-step="2" data-val="A" onclick="selectOption(this)">Cerco subito di riconciliarmi — l’incertezza mi pesa troppo</div>
+        <div class="ob-option" data-step="2" data-val="C" onclick="selectOption(this)">Reazioni intense che poi mi lasciano confusa e stanca</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-2">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-3">
+      <div class="ob-question">Come ti senti rispetto alla vicinanza emotiva nelle relazioni?</div>
+      <div class="ob-sub">Pensa alle tue relazioni più significative.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="3" data-val="C" onclick="selectOption(this)">Mi attrae ma mi spaventa — a volte mi sento sopraffatta</div>
+        <div class="ob-option" data-step="3" data-val="A" onclick="selectOption(this)">La desidero moltissimo, ma ho paura che non durerà</div>
+        <div class="ob-option" data-step="3" data-val="D" onclick="selectOption(this)">Mi piace la vicinanza e riesco a viverla senza perdermi</div>
+        <div class="ob-option" data-step="3" data-val="B" onclick="selectOption(this)">Troppa vicinanza mi mette a disagio — ho bisogno di confini chiari</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-3">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-4">
+      <div class="ob-question">Pensando alla tua infanzia, come descriveresti il clima emotivo in famiglia?</div>
+      <div class="ob-sub">Non serve che sia stato tutto positivo o negativo — cerca la sensazione prevalente.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="4" data-val="B" onclick="selectOption(this)">Distante — le emozioni non si esprimevano molto, ci si arrangiva da soli</div>
+        <div class="ob-option" data-step="4" data-val="C" onclick="selectOption(this)">Caotico o doloroso — c’era paura o confusione nelle relazioni familiari</div>
+        <div class="ob-option" data-step="4" data-val="D" onclick="selectOption(this)">Abbastanza stabile — mi sentivo vista e al sicuro, anche nelle difficoltà</div>
+        <div class="ob-option" data-step="4" data-val="A" onclick="selectOption(this)">Imprevedibile — non sapevo mai come avrebbero reagito le persone care</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-4">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-5">
+      <div class="ob-question">Durante un conflitto con il partner o una persona cara, come ti comporti di solito?</div>
+      <div class="ob-sub">Pensa all’ultima volta che hai litigato con qualcuno di importante.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="5" data-val="A" onclick="selectOption(this)">Insisto finché non risolviamo — l’idea di andare a letto con qualcosa in sospeso mi spaventa</div>
+        <div class="ob-option" data-step="5" data-val="D" onclick="selectOption(this)">Cerco di restare presente e ascoltare, anche quando fa male</div>
+        <div class="ob-option" data-step="5" data-val="C" onclick="selectOption(this)">Le emozioni prendono il sopravvento — a volte dico o faccio cose che poi rimpiango</div>
+        <div class="ob-option" data-step="5" data-val="B" onclick="selectOption(this)">Preferisco staccare e tornare sull’argomento quando sono più fredda</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-5">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-6">
+      <div class="ob-question">Come ti senti rispetto al tuo valore nelle relazioni?</div>
+      <div class="ob-sub">Ascolta la voce più profonda, non quella che vorresti avere.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="6" data-val="D" onclick="selectOption(this)">Ho una discreta fiducia in me stessa, anche se non sempre tutto va bene</div>
+        <div class="ob-option" data-step="6" data-val="C" onclick="selectOption(this)">Oscillo — a volte mi sento speciale, altre invisibile o sbagliata</div>
+        <div class="ob-option" data-step="6" data-val="B" onclick="selectOption(this)">Mi sento più a mio agio da sola — dipendere dagli altri mi fa sentire vulnerabile</div>
+        <div class="ob-option" data-step="6" data-val="A" onclick="selectOption(this)">Ho spesso paura di non essere abbastanza — che prima o poi mi lascino</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-6">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-7">
+      <div class="ob-question">Nelle amicizie importanti, come ti senti di solito?</div>
+      <div class="ob-sub">Le relazioni amicali spesso rispecchiano pattern profondi quanto quelle romantiche.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="7" data-val="C" onclick="selectOption(this)">Le amicizie sono intense ma spesso complicate — c’è molto calore ma anche conflitti</div>
+        <div class="ob-option" data-step="7" data-val="B" onclick="selectOption(this)">Preferisco pochi legami — aprirsi troppo mi mette a disagio</div>
+        <div class="ob-option" data-step="7" data-val="A" onclick="selectOption(this)">Mi preoccupo di essere un peso, o che le amiche si stanchino di me</div>
+        <div class="ob-option" data-step="7" data-val="D" onclick="selectOption(this)">Ho relazioni solide — riesco a dare e ricevere senza troppa ansia</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-7">Avanti</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-8">
+      <div class="ob-question">In questo momento della tua vita, cosa senti di cercare di più?</div>
+      <div class="ob-sub">Non c’è risposta giusta — è solo per capire dove sei adesso.</div>
+      <div class="ob-options">
+        <div class="ob-option" data-step="8" data-val="peace" onclick="selectOption(this)">Più pace interiore e meno ansia nelle relazioni</div>
+        <div class="ob-option" data-step="8" data-val="connect" onclick="selectOption(this)">Imparare ad aprirmi e a lasciarmi avvicinare davvero</div>
+        <div class="ob-option" data-step="8" data-val="stable" onclick="selectOption(this)">Stabilità emotiva e pattern più sani</div>
+        <div class="ob-option" data-step="8" data-val="deepen" onclick="selectOption(this)">Capire me stessa più in profondità</div>
+      </div>
+      <div class="ob-nav">
+        <button class="ob-btn-back" onclick="obBack()">← Indietro</button>
+        <button class="ob-btn-next" onclick="obNext()" disabled id="next-8">Calcola il mio profilo →</button>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-result">
+      <div id="ob-result-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HAMBURGER -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-name">Clara</div>
+    <div class="logo-tagline">La tua guida emotiva</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Il tuo spazio</div>
+    <div class="nav-item active" onclick="showView('chat')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Parla con Clara
+    </div>
+    <div class="nav-item" onclick="showView('specchio')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Il tuo specchio interiore
+    </div>
+    <div class="nav-item" onclick="showView('progressi')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Il tuo percorso
+    </div>
+  </div>
+  <div class="attachment-section">
+    <div class="nav-label">Stili di attaccamento</div>
+    <div class="attachment-pill" onclick="showStyle('ansioso')"><span class="dot dot-ansioso"></span> Stile Ansioso</div>
+    <div class="attachment-pill" onclick="showStyle('evitante')"><span class="dot dot-evitante"></span> Stile Evitante</div>
+    <div class="attachment-pill" onclick="showStyle('disorganizzato')"><span class="dot dot-disorganizzato"></span> Stile Disorganizzato</div>
+    <div class="attachment-pill" onclick="showStyle('sicuro')"><span class="dot dot-sicuro"></span> Stile Sicuro</div>
+    <div class="nav-item" onclick="showView('esercizi')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Esercizi guidati
+    </div>
+    <div class="nav-item" onclick="showView('libri')" style="margin-top:0px;">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Se vuoi approfondire
+    </div>
+  </div>
+  <div style="padding:0 0 8px;border-top:1px solid rgba(255,255,255,0.07);margin-top:8px">
+    <div class="nav-item" onclick="showView('piani')" style="margin-top:8px;">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Piani e abbonamento</span>
+      <span style="margin-left:auto;font-size:10px;background:rgba(196,137,122,0.2);color:var(--rose);border-radius:10px;padding:1px 7px;font-weight:500">Pro</span>
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="user-avatar" id="userAvatar">·</div>
+      <div class="user-info">
+        <div class="user-name">Utente</div>
+        <div class="user-status" id="userStatus">In esplorazione ✦</div>
+      </div>
+    </div>
+    <button onclick="resetOnboarding()" style="margin-top:14px;width:100%;padding:9px 12px;background:transparent;border:1px solid rgba(245,240,232,0.12);border-radius:10px;color:rgba(245,240,232,0.4);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;text-align:left;display:flex;align-items:center;gap:8px;" onmouseover="this.style.borderColor='rgba(196,137,122,0.4)';this.style.color='rgba(245,240,232,0.75)'" onmouseout="this.style.borderColor='rgba(245,240,232,0.12)';this.style.color='rgba(245,240,232,0.4)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Rifai il test
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- CHAT -->
+  <div class="view active" id="view-chat">
+    <div class="chat-header">
+      <div class="clara-avatar">C</div>
+      <div class="chat-header-info">
+        <h2>Clara</h2>
+        <p>Terapeuta empatica · Esperta in stili di attaccamento</p>
+      </div>
+      <div class="msg-counter" id="msgCounter"></div>
+    </div>
+    <div class="messages-area" id="messagesArea">
+      <div class="message clara">
+        <div class="message-avatar">C</div>
+        <div>
+          <div class="message-bubble">Ciao, sono Clara. Sono qui per te — senza giudizi, senza fretta.<br><br>Puoi raccontarmi come ti senti in questo momento, oppure dirmi cosa ti ha portato qui. Siamo al sicuro. ✦</div>
+          <div class="message-time">Ora</div>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="limit-banner" id="limitBanner">
+        <h4>Hai utilizzato i messaggi di oggi ✦</h4>
+        <p>Con Clara Free hai 3 messaggi al giorno. I tuoi si azzereranno a mezzanotte.<br>Oppure passa a Clara Essenziale per scrivere senza limiti.</p>
+        <div class="limit-banner-btns">
+          <button class="btn-upgrade" onclick="showView('piani')">Scopri i piani →</button>
+          <button class="btn-tomorrow" onclick="hideBanner()">A domani</button>
+        </div>
+      </div>
+      <div id="inputWrapper">
+        <div class="input-wrapper">
+          <textarea id="messageInput" placeholder="Scrivi a Clara..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">Clara risponde con intelligenza artificiale · Non sostituisce un professionista</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPECCHIO INTERIORE -->
+  <div class="view" id="view-specchio">
+    <div class="content-view">
+      <div class="page-header">
+        <h1>Il tuo specchio<br><em>interiore</em></h1>
+        <p>Qui Clara elabora i temi emersi nelle vostre conversazioni e ti restituisce un riflesso autentico di te stessa — pattern emotivi, stile di attaccamento emergente e aree di crescita.</p>
+      </div>
+      <button class="analyze-btn" onclick="generateReflection()" id="analyzeBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke-linecap="round"/></svg>
+        Chiedi a Clara di riflettere con te
+      </button>
+      <div id="reflectionArea"></div>
+    </div>
+  </div>
+
+  <!-- STILI -->
+  <div class="view" id="view-stili">
+    <div class="content-view">
+      <div class="page-header">
+        <h1 id="stileTitle">Stile di Attaccamento</h1>
+        <p id="stileSubtitle">Esplora le caratteristiche, i pattern emotivi e gli strumenti dedicati.</p>
+      </div>
+      <div id="stileContent"></div>
+    </div>
+  </div>
+
+  <!-- LIBRI -->
+  <div class="view" id="view-libri">
+    <div class="content-view">
+      <div class="page-header">
+        <h1>Se vuoi<br><em>approfondire</em></h1>
+        <p>Una selezione curata di libri per esplorare gli stili di attaccamento, la regolazione emotiva e la crescita personale.</p>
+      </div>
+      <div class="books-grid">
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5E6D3,#E8C4A8)">📖</div><div class="book-info"><h4>Attached</h4><div class="author">Amir Levine & Rachel Heller</div><p>Il testo fondamentale sulla teoria dell'attaccamento applicata alle relazioni adulte.</p><span class="book-tag tag-ansioso">Per tutti gli stili</span></div></div>
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#D3E8F5,#A8C4E8)">📘</div><div class="book-info"><h4>Hold Me Tight</h4><div class="author">Sue Johnson</div><p>Sette conversazioni per un amore duraturo. Un classico sulla terapia focalizzata sulle emozioni.</p><span class="book-tag tag-evitante">Relazioni</span></div></div>
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#E8D3F5,#C4A8E8)">📗</div><div class="book-info"><h4>Il Corpo Accusa il Colpo</h4><div class="author">Bessel van der Kolk</div><p>Come il trauma si conserva nel corpo e come trovare la strada verso la guarigione.</p><span class="book-tag tag-disorganizzato">Trauma</span></div></div>
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#D3F5E3,#A8E8C4)">📙</div><div class="book-info"><h4>Wired for Love</h4><div class="author">Stan Tatkin</div><p>Come capire il cervello del tuo partner e costruire una relazione sicura e duratura.</p><span class="book-tag tag-sicuro">Attaccamento sicuro</span></div></div>
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5EED3,#E8D4A8)">📕</div><div class="book-info"><h4>Polyvagal Theory</h4><div class="author">Stephen Porges</div><p>La teoria polivagale e il suo impatto sulla regolazione emotiva e le relazioni.</p><span class="book-tag tag-disorganizzato">Neuroscienze</span></div></div>
+        <div class="book-card"><div class="book-spine" style="background:linear-gradient(135deg,#F5D3D3,#E8A8A8)">📒</div><div class="book-info"><h4>L'Intelligenza Emotiva</h4><div class="author">Daniel Goleman</div><p>Il classico sull'importanza delle emozioni nell'intelligenza umana e nelle relazioni.</p><span class="book-tag tag-ansioso">Emozioni</span></div></div>
+      </div>
+    </div>
+  </div>
+  <!-- ESERCIZI -->
+  <div class="view" id="view-esercizi">
+    <div class="content-view">
+      <div class="page-header">
+        <h1>Esercizi<br><em>guidati</em></h1>
+        <p>Pratiche interattive per lavorare sui tuoi pattern emotivi. Ogni esercizio è pensato per il tuo stile di attaccamento — puoi farlo in pochi minuti, da sola, quando ne senti il bisogno.</p>
+      </div>
+
+      <div class="ex-section-title"><span style="background:#E8A87C"></span> Stile Ansioso — ridurre ossessioni e rassicurazioni</div>
+      <div class="ex-grid">
+        <div class="ex-card ansioso" onclick="openExercise('radicaCorpo')">
+          <span class="ex-tag tag-ansioso">Ancoraggio</span>
+          <h4>La radice del corpo</h4>
+          <p>Esercizio somatico per uscire dall'ansia da abbandono e tornare nel momento presente.</p>
+          <div class="ex-meta">5 min · guidato passo per passo</div>
+        </div>
+        <div class="ex-card ansioso" onclick="openExercise('letteraPaura')">
+          <span class="ex-tag tag-ansioso">Scrittura</span>
+          <h4>Lettera alla tua paura</h4>
+          <p>Scrivi una lettera alla parte di te che ha paura di essere lasciata.</p>
+          <div class="ex-meta">10 min · riflessione guidata</div>
+        </div>
+        <div class="ex-card ansioso" onclick="openExercise('termometro')">
+          <span class="ex-tag tag-ansioso">Consapevolezza</span>
+          <h4>Il termometro dell'ansia</h4>
+          <p>Impara a riconoscere l'intensità dell'ansia relazionale prima che diventi travolgente.</p>
+          <div class="ex-meta">7 min · con scala di intensità</div>
+        </div>
+      </div>
+
+      <div class="ex-section-title"><span style="background:#7CB9E8"></span> Stile Evitante — ridurre distanza e difese</div>
+      <div class="ex-grid">
+        <div class="ex-card evitante" onclick="openExercise('bisogno')">
+          <span class="ex-tag tag-evitante">Apertura</span>
+          <h4>Un bisogno alla volta</h4>
+          <p>Esercizio graduale per nominare un bisogno emotivo reale — senza doverlo subito condividere.</p>
+          <div class="ex-meta">5 min · privato e sicuro</div>
+        </div>
+        <div class="ex-card evitante" onclick="openExercise('muro')">
+          <span class="ex-tag tag-evitante">Corpo</span>
+          <h4>Dove sento il muro</h4>
+          <p>Esplora dove nel corpo si manifesta il bisogno di distanza emotiva.</p>
+          <div class="ex-meta">8 min · body scan guidato</div>
+        </div>
+        <div class="ex-card evitante" onclick="openExercise('vulnerabilita')">
+          <span class="ex-tag tag-evitante">Dialogo</span>
+          <h4>La vulnerabilità minima</h4>
+          <p>Pratica micro-passi di apertura emotiva verso qualcuno di sicuro.</p>
+          <div class="ex-meta">6 min · con riflessione</div>
+        </div>
+      </div>
+
+      <div class="ex-section-title"><span style="background:#B87CE8"></span> Stile Disorganizzato — ridurre caos e iper-reazione</div>
+      <div class="ex-grid">
+        <div class="ex-card disorganizzato" onclick="openExercise('ancora')">
+          <span class="ex-tag tag-disorganizzato">Regolazione</span>
+          <h4>L'ancora di sicurezza</h4>
+          <p>Tecnica polivagale per regolare il sistema nervoso nei momenti di attivazione intensa.</p>
+          <div class="ex-meta">4 min · immediato</div>
+        </div>
+        <div class="ex-card disorganizzato" onclick="openExercise('parteFuga')">
+          <span class="ex-tag tag-disorganizzato">Parti interiori</span>
+          <h4>La parte che vuole scappare</h4>
+          <p>Dialogo guidato con la parte che si attiva nel conflitto — per capirla senza esserne sopraffatta.</p>
+          <div class="ex-meta">12 min · con Clara</div>
+        </div>
+        <div class="ex-card disorganizzato" onclick="openExercise('colpaTua')">
+          <span class="ex-tag tag-disorganizzato">Autocompassione</span>
+          <h4>Non è colpa tua</h4>
+          <p>Esercizio per ridurre la vergogna legata ai propri pattern relazionali.</p>
+          <div class="ex-meta">8 min · guidato</div>
+        </div>
+        <div class="ex-card disorganizzato" onclick="openExercise('paradosso')">
+          <span class="ex-tag tag-disorganizzato">Integrazione</span>
+          <h4>Il paradosso del desiderio</h4>
+          <p>Lavora sul conflitto "voglio vicinanza ma mi spaventa" — stare con la tensione senza fuggire.</p>
+          <div class="ex-meta">10 min · profondo</div>
+        </div>
+      </div>
+
+      <div class="ex-section-title"><span style="background:#7CE8A8"></span> Stile Sicuro — mantenere e rafforzare</div>
+      <div class="ex-grid">
+        <div class="ex-card sicuro" onclick="openExercise('baseSicura')">
+          <span class="ex-tag tag-sicuro">Connessione</span>
+          <h4>La base sicura</h4>
+          <p>Rafforza la tua capacità di essere base sicura per gli altri — e per te stessa.</p>
+          <div class="ex-meta">7 min · riflessivo</div>
+        </div>
+        <div class="ex-card sicuro" onclick="openExercise('relazioniNutrono')">
+          <span class="ex-tag tag-sicuro">Gratitudine</span>
+          <h4>Le relazioni che nutrono</h4>
+          <p>Mappa le relazioni che ti danno energia e quelle che la tolgono.</p>
+          <div class="ex-meta">10 min · con mappa</div>
+        </div>
+        <div class="ex-card sicuro" onclick="openExercise('tempesta')">
+          <span class="ex-tag tag-sicuro">Resilienza</span>
+          <h4>Quando la tempesta arriva</h4>
+          <p>Come mantenere la base sicura durante un conflitto intenso senza perdere te stessa.</p>
+          <div class="ex-meta">8 min · pratico</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ESERCIZIO -->
+  <div class="ex-modal-overlay" id="exModalOverlay" onclick="closeExerciseOnOverlay(event)">
+    <div class="ex-modal" id="exModal">
+      <div class="ex-modal-header">
+        <div class="ex-progress-bar"><div class="ex-progress-fill" id="exProgressFill" style="width:0%"></div></div>
+      </div>
+      <div class="ex-modal-body" id="exModalBody"></div>
+    </div>
+  </div>
+
+  <!-- PROGRESSI VIEW -->
+  <div class="view" id="view-progressi">
+    <div class="content-view">
+      <div class="page-header">
+        <h1>Il tuo<br><em>percorso</em></h1>
+        <p>Clara legge la tua storia e ti racconta dove sei arrivata — come il tuo stile emotivo si sta evolvendo e quali temi stanno emergendo nel tuo cammino.</p>
+      </div>
+
+      <button class="analyze-btn" onclick="generateProgressi()" id="progressiBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Chiedi a Clara di raccontare il tuo percorso
+      </button>
+
+      <div id="progressiArea"></div>
+    </div>
+  </div>
+
+  <!-- PIANI VIEW -->
+  <div class="view" id="view-piani">
+    <div class="content-view">
+
+      <div class="piani-hero">
+        <h1>Scegli il tuo<br><em>percorso con Clara</em></h1>
+        <p>Inizia gratuitamente. Abbonati quando senti che Clara fa davvero la differenza — senza pressioni, senza impegni a lungo termine.</p>
+      </div>
+
+      <div class="piani-grid">
+
+        <!-- FREE -->
+        <div class="piano-card free">
+          <div class="piano-name">Gratuito</div>
+          <div class="piano-price">€0 <span>/ sempre</span></div>
+          <div class="piano-annual">&nbsp;</div>
+          <ul class="piano-features">
+            <li class="on">7 giorni di prova completa</li>
+            <li class="on">Test stile di attaccamento</li>
+            <li class="on">3 messaggi al giorno con Clara</li>
+            <li class="on">Schede degli stili</li>
+            <li class="off">Specchio interiore</li>
+            <li class="off">Esercizi guidati</li>
+            <li class="off">Chat illimitata</li>
+          </ul>
+          <button class="piano-btn current" disabled>Piano attuale</button>
+        </div>
+
+        <!-- ESSENZIALE -->
+        <div class="piano-card essenziale">
+          <div class="piano-name">Clara Essenziale</div>
+          <div class="piano-price">€7 <span>/ mese</span></div>
+          <div class="piano-annual">oppure €59/anno — risparmi il 30%</div>
+          <ul class="piano-features">
+            <li class="on">Chat illimitata con Clara</li>
+            <li class="on">Storico conversazioni</li>
+            <li class="on">Specchio interiore completo</li>
+            <li class="on">Test stile di attaccamento</li>
+            <li class="on">Schede degli stili</li>
+            <li class="off">Esercizi guidati interattivi</li>
+            <li class="off">Quiz approfondito</li>
+          </ul>
+          <button class="piano-btn primary" onclick="openWaitlist('Essenziale', '€7/mese')">Inizia ora →</button>
+        </div>
+
+        <!-- PROFONDA -->
+        <div class="piano-card profonda featured">
+          <div class="piano-badge">✦ consigliato</div>
+          <div class="piano-name">Clara Profonda</div>
+          <div class="piano-price">€12 <span>/ mese</span></div>
+          <div class="piano-annual">oppure €99/anno — risparmi il 30%</div>
+          <ul class="piano-features">
+            <li class="on">Tutto di Essenziale</li>
+            <li class="on">14 esercizi guidati interattivi</li>
+            <li class="on">Quiz approfondito sullo stile</li>
+            <li class="on">Promemoria ed esercizi settimanali</li>
+            <li class="on">Sezione progressi personali</li>
+            <li class="on">Accesso anticipato a nuovi contenuti</li>
+          </ul>
+          <button class="piano-btn primary" onclick="openWaitlist('Profonda', '€12/mese')">Inizia ora →</button>
+        </div>
+
+      </div>
+
+      <!-- FAQ -->
+      <div class="piani-faq">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--charcoal);margin-bottom:32px;text-align:center">Domande frequenti</div>
+
+        <div class="faq-item">
+          <div class="faq-q">Posso cancellare quando voglio?</div>
+          <div class="faq-a">Sì, puoi cancellare in qualsiasi momento dal tuo profilo. Non ci sono penali o vincoli. Se cancelli, l'abbonamento rimane attivo fino alla fine del periodo già pagato.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Clara sostituisce un terapeuta?</div>
+          <div class="faq-a">No — e non vuole farlo. Clara è una compagna di esplorazione emotiva, non una sostituta della terapia professionale. Se stai attraversando un momento di crisi, ti invitiamo a rivolgerti a un professionista della salute mentale.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">I miei dati sono al sicuro?</div>
+          <div class="faq-a">Le tue conversazioni con Clara sono private e salvate solo sul tuo dispositivo. Non condividiamo i tuoi dati con terze parti e non usiamo le conversazioni per addestrare modelli AI.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Cosa succede dopo i 7 giorni di prova?</div>
+          <div class="faq-a">Dopo il trial puoi continuare a usare Clara gratuitamente con 3 messaggi al giorno, oppure scegliere un piano per sbloccare tutte le funzionalità. Non ti verrà addebitato nulla automaticamente.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WAITLIST MODAL -->
+  <div class="waitlist-overlay" id="waitlistOverlay" onclick="closeWaitlistOnOverlay(event)">
+    <div class="waitlist-modal">
+      <h3 id="waitlistTitle">Unisciti alla lista</h3>
+      <p id="waitlistDesc">I pagamenti saranno disponibili a breve. Lascia la tua email e ti avviseremo appena puoi attivare il piano — con uno sconto di benvenuto.</p>
+      <input class="waitlist-input" type="text" id="waitlistName" placeholder="Il tuo nome" />
+      <input class="waitlist-input" type="email" id="waitlistEmail" placeholder="La tua email" />
+      <div id="waitlistMsg" style="display:none;background:rgba(124,232,168,0.15);border:1px solid rgba(124,232,168,0.3);border-radius:12px;padding:12px 16px;font-size:13px;color:#085041;margin-bottom:12px;"></div>
+      <button class="waitlist-submit" onclick="submitWaitlist()">Avvisami quando è disponibile →</button>
+      <button class="waitlist-cancel" onclick="closeWaitlist()">Annulla</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ─── CONSTANTS ───
+const FREE_DAILY_LIMIT = 3;
+const TRIAL_DAYS = 7;
+
+const STYLES_DATA = {
+  ansioso:{ emoji:'🌊', title:'Stile Ansioso', color:'#E8A87C', tagClass:'tag-ansioso', description:'Chi ha uno stile ansioso tende a preoccuparsi molto delle relazioni, cercando rassicurazioni continue. C\'è spesso una paura profonda dell\'abbandono e una sensazione che gli altri non ricambino l\'amore con la stessa intensità.', traits:['Ipervigilanza ai segnali emotivi del partner','Bisogno frequente di conferme','Difficoltà a stare con l\'incertezza','Sensibilità elevata al distacco'], tools:['Esercizio di ancoraggio emotivo','Lettera al tuo sé interiore','Diario delle rassicurazioni','Meditazione sull\'accettazione'] },
+  evitante:{ emoji:'🏔️', title:'Stile Evitante', color:'#7CB9E8', tagClass:'tag-evitante', description:'Lo stile evitante si manifesta con una tendenza all\'autosufficienza emotiva e una certa difficoltà nell\'intimità. La vicinanza emotiva può sembrare soffocante, e spesso ci si è abituati a fare affidamento solo su se stessi.', traits:['Tendenza all\'autosufficienza emotiva','Disagio con la vicinanza intensa','Difficoltà ad esprimere i bisogni','Valorizzazione forte dell\'indipendenza'], tools:['Esercizio di apertura graduale','Mappa dei bisogni emotivi','Pratica della vulnerabilità','Journaling sull\'intimità'] },
+  disorganizzato:{ emoji:'🌪️', title:'Stile Disorganizzato', color:'#B87CE8', tagClass:'tag-disorganizzato', description:'Lo stile disorganizzato è spesso legato a esperienze precoci di dolore nelle relazioni di cura. Chi lo sperimenta desidera la vicinanza ma la teme allo stesso tempo, generando un ciclo di avvicinamento e allontanamento.', traits:['Conflitto interno tra desiderio e paura','Reazioni intense e difficili da controllare','Difficoltà a fidarsi','Pattern relazionali contraddittori'], tools:['Esercizio di regolazione del sistema nervoso','Pratica dell\'autocompassione','Lavoro con le parti interiori','Ancoraggio sensoriale'] },
+  sicuro:{ emoji:'⚓', title:'Stile Sicuro', color:'#7CE8A8', tagClass:'tag-sicuro', description:'Lo stile sicuro rappresenta una base sana per le relazioni. Chi lo possiede sa chiedere vicinanza senza temere l\'abbandono, ed è capace di stare da solo senza sentirsi perso. È un obiettivo evolutivo possibile per tutti.', traits:['Comfort con intimità e indipendenza','Comunicazione emotiva chiara','Fiducia nelle relazioni','Buona gestione del conflitto'], tools:['Rafforzamento della base sicura','Pratiche di connessione autentica','Esercizi di gratitudine relazionale','Meditazione della presenza'] },
+  misto:{ emoji:'🌿', title:'Stile Misto', color:'#C4897A', tagClass:'tag-misto', description:'Hai caratteristiche di più stili — questo è normale e molto comune. Il tuo profilo emotivo è sfumato e dipende spesso dal contesto. Clara può aiutarti a esplorare quali pattern emergono in situazioni diverse.', traits:['Flessibilità emotiva situazionale','Mix di bisogni di vicinanza e autonomia','Pattern diversi in contesti diversi','Ricchezza e complessità interiore'], tools:['Mappatura dei pattern per contesto','Esplorazione delle parti interiori','Esercizi di consapevolezza emotiva','Dialogo con Clara per esplorare'] }
+};
+
+const BOOKS_BY_STYLE = {
+  ansioso:[{emoji:'📖',title:'Attached',author:'Levine & Heller',why:'Capire il tuo stile ansioso e come cambiarlo'},{emoji:'📒',title:'L\'Intelligenza Emotiva',author:'Daniel Goleman',why:'Riconoscere e gestire le emozioni intense'}],
+  evitante:[{emoji:'📘',title:'Hold Me Tight',author:'Sue Johnson',why:'Imparare ad aprirsi senza perdersi'},{emoji:'📙',title:'Wired for Love',author:'Stan Tatkin',why:'Capire l\'intimità senza sentirsi soffocare'}],
+  disorganizzato:[{emoji:'📗',title:'Il Corpo Accusa il Colpo',author:'Bessel van der Kolk',why:'Lavorare con il trauma nelle relazioni'},{emoji:'📕',title:'Polyvagal Theory',author:'Stephen Porges',why:'Regolazione del sistema nervoso e sicurezza'}],
+  sicuro:[{emoji:'📖',title:'Attached',author:'Levine & Heller',why:'Approfondire e mantenere una base sicura'},{emoji:'📙',title:'Wired for Love',author:'Stan Tatkin',why:'Coltivare connessioni profonde e durature'}],
+  misto:[{emoji:'📖',title:'Attached',author:'Levine & Heller',why:'Il punto di partenza per capire tutti gli stili'},{emoji:'📘',title:'Hold Me Tight',author:'Sue Johnson',why:'Per esplorare la vicinanza emotiva in modo sicuro'}]
+};
+
+// ─── STATE ───
+let obStep = 0;
+const obAnswers = {};
+let conversationHistory = [];
+let userStyle = null;
+let isStreaming = false;
+
+// ─── LOCALSTORAGE ───
+function saveState() {
+  localStorage.setItem('clara_state', JSON.stringify({ conversationHistory, userStyle, onboardingDone: true, trialStart: getTrialStart() }));
+}
+
+function loadState() {
+  try { const r = localStorage.getItem('clara_state'); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+
+function getTrialStart() {
+  const s = loadState();
+  return s && s.trialStart ? s.trialStart : null;
+}
+
+function isInTrial() {
+  const ts = getTrialStart();
+  if (!ts) return false;
+  return (Date.now() - ts) / (1000*60*60*24) < TRIAL_DAYS;
+}
+
+function isSubscribed() {
+  return localStorage.getItem('clara_subscribed') === 'true';
+}
+
+function getMsgLog() {
+  try { const r = localStorage.getItem('clara_msglog'); return r ? JSON.parse(r) : {date:'',count:0}; } catch { return {date:'',count:0}; }
+}
+
+function getTodayStr() { return new Date().toISOString().split('T')[0]; }
+
+function getMsgsToday() {
+  const log = getMsgLog();
+  return log.date === getTodayStr() ? log.count : 0;
+}
+
+function incrementMsgCount() {
+  const today = getTodayStr();
+  const log = getMsgLog();
+  const count = log.date === today ? log.count + 1 : 1;
+  localStorage.setItem('clara_msglog', JSON.stringify({date:today,count}));
+}
+
+function canSendMessage() {
+  if (isSubscribed() || isInTrial()) return true;
+  return getMsgsToday() < FREE_DAILY_LIMIT;
+}
+
+function updateCounter() {
+  const counter = document.getElementById('msgCounter');
+  if (!counter) return;
+  if (isSubscribed()) { counter.style.display='none'; return; }
+  if (isInTrial()) {
+    const daysLeft = Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - getTrialStart()) / (1000*60*60*24)));
+    counter.textContent = `Trial: ${daysLeft}g rimasti`;
+    counter.className = 'msg-counter';
+    return;
+  }
+  const rem = Math.max(0, FREE_DAILY_LIMIT - getMsgsToday());
+  counter.textContent = `${rem} messaggi oggi`;
+  counter.className = rem <= 1 ? 'msg-counter warning' : 'msg-counter';
+  if (rem === 0) {
+    document.getElementById('limitBanner').classList.add('visible');
+    document.getElementById('inputWrapper').style.display = 'none';
+  } else {
+    document.getElementById('limitBanner').classList.remove('visible');
+    document.getElementById('inputWrapper').style.display = 'block';
+  }
+}
+
+function hideBanner() { document.getElementById('limitBanner').classList.remove('visible'); }
+function showUpgrade() { showView('piani'); }
+
+// ─── ONBOARDING ───
+const OB_Q = 8;
+
+function renderProgress() {
+  const p = document.getElementById('obProgress');
+  p.innerHTML = '';
+  for (let i=0;i<OB_Q;i++) {
+    const d = document.createElement('div');
+    d.className = 'ob-dot' + (i < obStep ? ' done' : '');
+    p.appendChild(d);
+  }
+}
+
+function selectOption(el) {
+  const step = el.dataset.step;
+  document.querySelectorAll(`[data-step="${step}"]`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  obAnswers[step] = el.dataset.val;
+  const nb = document.getElementById(`next-${step}`);
+  if (nb) nb.disabled = false;
+}
+
+function obNext() {
+  document.getElementById(`ob-step-${obStep}`).classList.remove('active');
+  obStep++;
+  if (obStep <= OB_Q) {
+    document.getElementById(`ob-step-${obStep}`).classList.add('active');
+    renderProgress();
+  } else {
+    document.getElementById('ob-step-result').classList.add('active');
+    renderProgress();
+    computeResult();
+  }
+}
+
+function obBack() {
+  document.getElementById(`ob-step-${obStep}`).classList.remove('active');
+  obStep--;
+  document.getElementById(`ob-step-${obStep}`).classList.add('active');
+  renderProgress();
+}
+
+function computeResult() {
+  // Domande 1-7 hanno opzioni A/B/C/D mappate sugli stili
+  // A = ansioso, B = evitante, C = disorganizzato, D = sicuro
+  const counts = {A:0,B:0,C:0,D:0};
+  ['1','2','3','4','5','6','7'].forEach(s => { if(obAnswers[s]) counts[obAnswers[s]]++; });
+  const max = Math.max(...Object.values(counts));
+  const winners = Object.keys(counts).filter(k => counts[k]===max);
+  // Se due stili sono a pari merito con 3+ voti ciascuno → misto
+  // Se uno stile domina → quello
+  const map = {A:'ansioso',B:'evitante',C:'disorganizzato',D:'sicuro'};
+  if (winners.length > 1 && max >= 3) {
+    userStyle = 'misto';
+  } else if (winners.length > 1) {
+    // pari merito su pochi voti: prendi il primo per ordine priorità A>C>B>D
+    const priority = ['A','C','B','D'];
+    userStyle = map[priority.find(p => winners.includes(p))];
+  } else {
+    userStyle = map[winners[0]];
+  }
+
+  const trialStart = (loadState()&&loadState().trialStart) || Date.now();
+  localStorage.setItem('clara_state', JSON.stringify({conversationHistory:[],userStyle,onboardingDone:true,trialStart}));
+
+  const data = STYLES_DATA[userStyle];
+  const books = BOOKS_BY_STYLE[userStyle];
+  const colorMap = {ansioso:'rgba(232,168,124,0.15)',evitante:'rgba(124,185,232,0.15)',disorganizzato:'rgba(184,124,232,0.15)',sicuro:'rgba(124,232,168,0.15)',misto:'rgba(196,137,122,0.15)'};
+  const textMap = {ansioso:'#B8733A',evitante:'#3A7AB8',disorganizzato:'#7A3AB8',sicuro:'#3AB870',misto:'#8B4F3A'};
+
+  document.getElementById('ob-result-content').innerHTML = `
+    <div class="ob-result-badge" style="background:${colorMap[userStyle]};color:${textMap[userStyle]}">${data.emoji} ${data.title}</div>
+    <div class="ob-result-title">Il tuo profilo emotivo<br>è emerso.</div>
+    <div class="ob-result-desc">${data.description}</div>
+    <div class="ob-books">
+      <div class="ob-books-label">✦ I libri più utili per te</div>
+      ${books.map(b=>`<div class="ob-book-item"><span class="ob-book-emoji">${b.emoji}</span><div class="ob-book-info"><h4>${b.title} — <span style="font-weight:300;font-style:italic">${b.author}</span></h4><p>${b.why}</p></div></div>`).join('')}
+    </div>
+    <button class="ob-cta" onclick="startApp()">Inizia con Clara →</button>
+    <div class="ob-trial-note">7 giorni gratuiti · Nessuna carta richiesta</div>
+  `;
+}
+
+function startApp() {
+  document.getElementById('onboarding').classList.add('hidden');
+  updateSidebarUser();
+  const data = STYLES_DATA[userStyle];
+  const welcome = `Ho letto il tuo profilo. ${data.emoji}\n\nIl tuo stile emergente è quello ${data.title.toLowerCase()} — e capisco quanto possa essere faticoso portare certi pattern nelle relazioni.\n\nSono qui per te. Puoi iniziare raccontandomi qualcosa che senti in questo momento, oppure chiedermi di guidarti in un esercizio. ✦`;
+  appendMessage('clara', welcome);
+  conversationHistory.push({role:'assistant',content:welcome,ts:Date.now()});
+  saveState();
+  updateCounter();
+}
+
+function updateSidebarUser() {
+  if (!userStyle) return;
+  const data = STYLES_DATA[userStyle];
+  document.getElementById('userStatus').textContent = `${data.emoji} ${data.title}`;
+}
+
+
+// ─── ESERCIZI ───
+const EXERCISES = {
+  radicaCorpo: {
+    title: 'La radice del corpo',
+    style: 'ansioso',
+    color: '#E8A87C',
+    steps: [
+      { type:'intro', text:"Questo esercizio ti aiuta a uscire dall'ansia relazionale tornando nel tuo corpo. Non richiede nulla di speciale — solo un posto tranquillo dove sederti per qualche minuto." },
+      { type:'action', text:"Siediti con i piedi ben appoggiati sul pavimento. Senti il contatto dei piedi con il suolo — la sua solidità, la sua temperatura. Chiudi gli occhi se ti senti a tuo agio." },
+      { type:'action', text:"Porta l'attenzione al respiro. Non cambiarlo — osservalo solo. Nota come l'addome si muove quando inspiri. Fai tre respiri lenti e profondi." },
+      { type:'question', q:"In questo momento, su una scala da 1 a 10, quanto senti l'ansia nel corpo? Dove la senti fisicamente?", placeholder:"Es: 7, la sento come un nodo allo stomaco..." },
+      { type:'action', text:"Porta le mani sulle cosce e premi leggermente. Senti la pressione — sei qui, sei reale, sei al sicuro in questo momento. Questo momento esiste, indipendentemente da ciò che temi." },
+      { type:'question', q:"Cosa noti adesso nel corpo rispetto a prima? Anche piccoli cambiamenti contano.", placeholder:"Es: il respiro è un po' più lento..." },
+      { type:'complete', msg:"Hai appena fatto qualcosa di importante — sei tornata nel tuo corpo invece di restare nella mente ansiosa. Con la pratica, questo diventa uno strumento sempre disponibile.", cta:"Parla con Clara di com'è andata" }
+    ]
+  },
+  letteraPaura: {
+    title: 'Lettera alla tua paura',
+    style: 'ansioso',
+    color: '#E8A87C',
+    steps: [
+      { type:'intro', text:"Scrivere alla nostra paura — invece di subirla — cambia il rapporto che abbiamo con lei. Non la elimina, ma la rende meno soverchiante. Prenditi il tempo che ti serve." },
+      { type:'question', q:'Inizia così: "Cara paura di essere lasciata..." e continua scrivendo tutto quello che vuoi dirle. Non filtrare nulla.', placeholder:"Cara paura di essere lasciata..." },
+      { type:'question', q:"Ora scrivi da dove pensi che venga questa paura. Quando è nata? Cosa la alimenta?", placeholder:"Penso che tu sia nata quando..." },
+      { type:'question', q:"Cosa ti ha protetto finora questa paura? C'è qualcosa di utile che ha fatto per te, anche se in modo goffo?", placeholder:"In un certo senso mi hai protetta da..." },
+      { type:'question', q:"Cosa vorresti dirle adesso? Cosa ha bisogno di sentirsi dire questa parte di te?", placeholder:"Quello che voglio dirti è..." },
+      { type:'complete', msg:"Hai appena guardato in faccia qualcosa che di solito ti travolge. Questa lettera è tua — rileggila quando l'ansia si fa intensa.", cta:"Condividi con Clara quello che hai scoperto" }
+    ]
+  },
+  termometro: {
+    title: "Il termometro dell'ansia",
+    style: 'ansioso',
+    color: '#E8A87C',
+    steps: [
+      { type:'intro', text:"L'ansia relazionale spesso ci travolge perché non la riconosciamo finché non è già al massimo. Questo esercizio ti aiuta a identificarla prima, quando è ancora gestibile." },
+      { type:'question', q:"Pensa a una situazione recente in cui hai sentito ansia in una relazione. Descrivila brevemente.", placeholder:"Es: il partner non ha risposto per ore..." },
+      { type:'question', q:"Ripercorri quella situazione. Qual era il primo segnale fisico che l'ansia stava arrivando? (battito, respiro, tensione...)", placeholder:"Il primo segnale era..." },
+      { type:'question', q:"Com'era l'intensità all'inizio su una scala da 1 a 10? E al picco? Cosa l'ha fatta salire?", placeholder:"Iniziava a 3, poi è salita a 8 quando..." },
+      { type:'action', text:"Ora immagina di riconoscere quel primo segnale la prossima volta. Potresti fermarti lì — prima che l'ansia salga. Il segnale precoce è il tuo alleato." },
+      { type:'question', q:"Qual è UNA cosa concreta che potresti fare quando senti quel primo segnale, la prossima volta?", placeholder:"Potrei..." },
+      { type:'complete', msg:"Hai appena costruito un piano di intervento precoce. Più lo pratichi, più diventa automatico riconoscere l'ansia prima che ti sommerga.", cta:"Approfondisci con Clara" }
+    ]
+  },
+  bisogno: {
+    title: 'Un bisogno alla volta',
+    style: 'evitante',
+    color: '#7CB9E8',
+    steps: [
+      { type:'intro', text:"Per chi ha uno stile evitante, nominare i propri bisogni può sembrare strano o persino pericoloso. Questo esercizio è privato — non devi condividere nulla con nessuno se non vuoi." },
+      { type:'action', text:"Prenditi un momento di silenzio. Respira. Chiedi a te stessa, senza fretta: 'Cosa ho bisogno in questo momento nelle mie relazioni?' Non giudicare la risposta." },
+      { type:'question', q:"Completa questa frase senza pensarci troppo: 'In questo momento, quello di cui avrei più bisogno da chi amo è...'", placeholder:"...anche se fatico ad ammetterlo" },
+      { type:'question', q:"Come ti fa sentire aver scritto quella cosa? C'è qualcosa che si attiva — sollievo, imbarazzo, paura?", placeholder:"Mi fa sentire..." },
+      { type:'action', text:"Nominare un bisogno non significa doverlo chiedere. Non significa diventare dipendente. Significa semplicemente che esiste — e che tu lo sai." },
+      { type:'question', q:"Questo bisogno che hai nominato — c'è qualcuno nella tua vita con cui ti sentiresti al sicuro a condividerlo, anche solo in parte?", placeholder:"Forse con..." },
+      { type:'complete', msg:"Hai fatto qualcosa di importante: hai guardato dentro invece di allontanarti. Questo è il primo passo per ridurre la distanza — non con gli altri, ma con te stessa.", cta:"Parla con Clara di questo bisogno" }
+    ]
+  },
+  muro: {
+    title: 'Dove sento il muro',
+    style: 'evitante',
+    color: '#7CB9E8',
+    steps: [
+      { type:'intro', text:"Il distacco emotivo non è solo nella mente — si manifesta anche nel corpo. Questo esercizio ti aiuta a riconoscere dove e come si attiva fisicamente il tuo bisogno di distanza." },
+      { type:'action', text:"Siediti in modo comodo e chiudi gli occhi. Pensa a una persona con cui hai una relazione significativa. Immagina che si stia avvicinando emotivamente a te — che voglia parlarti di qualcosa di intimo." },
+      { type:'question', q:"Cosa succede nel tuo corpo mentre immagini questa scena? Dove senti la resistenza o il disagio?", placeholder:"Sento una tensione in..." },
+      { type:'question', q:"Qual è il primo impulso che noti? (chiudersi, cambiare argomento, diventare razionale, fare dell'umorismo...)", placeholder:"Il mio primo impulso è..." },
+      { type:'action', text:"Quel disagio che senti non è un difetto — è una difesa che si è formata per proteggerti. Era utile. Ma forse oggi puoi permetterti di restare un momento di più, prima di attivare la distanza." },
+      { type:'question', q:"Se quella difesa potesse parlare, cosa direbbe? Da cosa ti sta proteggendo?", placeholder:"Questa difesa mi sta proteggendo da..." },
+      { type:'complete', msg:"Hai appena conosciuto meglio una parte di te. Il muro non è il nemico — ma sapere dove sta è il primo passo per scegliere quando aprire uno spiraglio.", cta:"Esplora questo con Clara" }
+    ]
+  },
+  vulnerabilita: {
+    title: 'La vulnerabilità minima',
+    style: 'evitante',
+    color: '#7CB9E8',
+    steps: [
+      { type:'intro', text:"Non si tratta di diventare improvvisamente aperti — si tratta di fare un passo microscopico verso la connessione. Qualcosa di reale, ma piccolo e sicuro." },
+      { type:'question', q:"Pensa a qualcuno di cui ti fidi, anche solo un po'. Chi è?", placeholder:"Una persona di cui mi fido è..." },
+      { type:'question', q:"C'è qualcosa che hai vissuto di recente — un'emozione, una difficoltà, una gioia — che non hai condiviso con nessuno?", placeholder:"Una cosa che non ho condiviso è..." },
+      { type:'action', text:"Non ti sto chiedendo di condividerla adesso. Ti sto chiedendo di immaginare cosa succederebbe se lo facessi — con quella persona sicura." },
+      { type:'question', q:"Cosa temi che succederebbe se condividessi quella cosa? Qual è il rischio che immagini?", placeholder:"Temo che..." },
+      { type:'question', q:"Quanto è probabile, realisticamente, che quel rischio si avveri? E se succedesse, potresti gestirlo?", placeholder:"In realtà la probabilità è..." },
+      { type:'complete', msg:"Hai appena sfidato una delle credenze centrali dello stile evitante: che aprirsi sia pericoloso. Il passo successivo è tuo — nessuna fretta.", cta:"Condividi con Clara come ti senti" }
+    ]
+  },
+  ancora: {
+    title: "L'ancora di sicurezza",
+    style: 'disorganizzato',
+    color: '#B87CE8',
+    steps: [
+      { type:'intro', text:"Quando il sistema nervoso si attiva intensamente, la mente non riesce a ragionare. Prima di tutto bisogna regolare il corpo. Questo esercizio si basa sulla teoria polivagale di Porges." },
+      { type:'action', text:"STOP. Ovunque tu sia, smetti quello che stai facendo. Poggia entrambi i piedi sul pavimento. Senti la solidità sotto di te. Sei qui. Sei fisica. Esisti in questo spazio." },
+      { type:'action', text:"Fai questo: inspira contando fino a 4. Trattieni 1 secondo. Espira contando fino a 6. Ripeti 4 volte. L'espirazione più lunga attiva il nervo vago e calma il sistema nervoso." },
+      { type:'question', q:"Dopo i 4 respiri, nota: l'intensità dell'attivazione è cambiata? Anche solo di poco?", placeholder:"Sento che..." },
+      { type:'action', text:"Ora orienta gli occhi nella stanza, lentamente. Identifica 3 oggetti che vedi. Nominarli mentalmente dice al tuo sistema nervoso: sei al sicuro, non c'è pericolo reale ora." },
+      { type:'question', q:"Come stai adesso rispetto a quando hai iniziato? Descrivi quello che senti nel corpo.", placeholder:"Adesso nel corpo sento..." },
+      { type:'complete', msg:"Hai appena usato uno strumento potente che puoi portare ovunque. Più lo pratichi nei momenti di calma, più sarà disponibile quando ne hai davvero bisogno.", cta:"Parla con Clara di cosa ha scatenato l'attivazione" }
+    ]
+  },
+  parteFuga: {
+    title: 'La parte che vuole scappare',
+    style: 'disorganizzato',
+    color: '#B87CE8',
+    steps: [
+      { type:'intro', text:"Nello stile disorganizzato spesso c'è una parte di noi che vuole scappare quando le cose si fanno intense. Non è un difetto — è una difesa che si è formata per sopravvivere. Oggi la incontriamo." },
+      { type:'question', q:"Pensa all'ultima volta che hai avuto un impulso forte di allontanarti da qualcuno di importante. Cosa stava succedendo?", placeholder:"Stava succedendo che..." },
+      { type:'action', text:"Immagina quella parte di te che voleva scappare come una figura separata — potrebbe avere una forma, un'età, un'espressione. Non giudicarla. È parte di te." },
+      { type:'question', q:"Se quella parte potesse parlare, cosa direbbe? Cosa vuole proteggere?", placeholder:"Quella parte direbbe..." },
+      { type:'question', q:"Da cosa ha imparato a scappare? Quando è nata questa strategia nella tua vita?", placeholder:"Penso che abbia imparato a scappare quando..." },
+      { type:'action', text:"Quella parte non è il nemico. Ha fatto del suo meglio con quello che aveva. Puoi ringraziarla per la protezione — e dirle che oggi hai altre risorse." },
+      { type:'question', q:"Cosa vorresti dire a questa parte di te adesso?", placeholder:"Voglio dirti che..." },
+      { type:'complete', msg:"Hai appena fatto un lavoro profondo. Incontrare le nostre parti più difensive con compassione invece che con vergogna è una delle cose più curative che esistano.", cta:"Continua questa esplorazione con Clara" }
+    ]
+  },
+  colpaTua: {
+    title: 'Non è colpa tua',
+    style: 'disorganizzato',
+    color: '#B87CE8',
+    steps: [
+      { type:'intro', text:"Molte persone con stile disorganizzato portano una vergogna profonda per i loro pattern — come se fossero rotte o troppo. Questo esercizio lavora su quella vergogna." },
+      { type:'question', q:"C'è qualcosa del tuo modo di stare nelle relazioni di cui ti vergogni o che giudichi duramente in te stessa?", placeholder:"Una cosa di cui mi vergogno è..." },
+      { type:'action', text:"Leggi quello che hai scritto. Ora immagina che una tua amica cara ti stesse descrivendo esattamente la stessa cosa di sé stessa. Cosa proveresti per lei? Cosa le diresti?" },
+      { type:'question', q:"Cosa diresti a quella amica?", placeholder:"Le direi..." },
+      { type:'action', text:"Quello che hai scritto per lei — puoi dirlo a te stessa? I nostri pattern relazionali non sono scelte. Si sono formati in risposta a quello che abbiamo vissuto." },
+      { type:'question', q:"Riesci a scrivere una frase di compassione verso te stessa, rispetto a quello che hai scritto prima?", placeholder:"A me stessa voglio dire..." },
+      { type:'complete', msg:"L'autocompassione non è debolezza — è il terreno su cui cresce il cambiamento reale. Quello che hai scritto oggi è un seme.", cta:"Condividi con Clara quello che hai scoperto" }
+    ]
+  },
+  paradosso: {
+    title: 'Il paradosso del desiderio',
+    style: 'disorganizzato',
+    color: '#B87CE8',
+    steps: [
+      { type:'intro', text:"Lo stile disorganizzato vive in una tensione paradossale: vuole profondamente la vicinanza, ma la vicinanza attiva la paura. Questo esercizio non risolve il paradosso — ti aiuta a starci dentro senza esserne distrutta." },
+      { type:'question', q:"Descrivi il paradosso come lo senti tu: cosa vuoi nelle relazioni? E cosa ti spaventa di quello che vuoi?", placeholder:"Voglio... ma ho paura di..." },
+      { type:'action', text:"Quel conflitto che senti non è segno che qualcosa non va. È la traccia di esperienze precoci in cui la vicinanza era anche fonte di dolore. Il tuo sistema nervoso ha imparato a temere quello che desidera." },
+      { type:'question', q:"Quando senti più forte il desiderio di vicinanza? E quando si attiva di più la paura?", placeholder:"Il desiderio è più forte quando... La paura si attiva quando..." },
+      { type:'action', text:"Prova questo: respira e permetti a entrambe le sensazioni di esistere allo stesso tempo. Il desiderio E la paura. Non devi scegliere tra loro. Non devi risolvere nulla adesso." },
+      { type:'question', q:"Cosa noti quando permetti a entrambe di esistere senza combatterle?", placeholder:"Noto che..." },
+      { type:'complete', msg:"Stare con la tensione del paradosso — senza fuggire né congelare — è una delle forme più profonde di guarigione per lo stile disorganizzato. Hai appena praticato esattamente questo.", cta:"Esplora il paradosso con Clara" }
+    ]
+  },
+  baseSicura: {
+    title: 'La base sicura',
+    style: 'sicuro',
+    color: '#7CE8A8',
+    steps: [
+      { type:'intro', text:"La base sicura non è uno stato passivo — va coltivata e rafforzata. Questo esercizio ti aiuta a riconoscere e consolidare quello che già hai, e a capire come essere base sicura anche per gli altri." },
+      { type:'question', q:"Pensa a qualcuno nella tua vita che ti ha dato una sensazione di base sicura — passato o presente. Chi è? Come ti faceva sentire?", placeholder:"Questa persona è..." },
+      { type:'question', q:"Quali qualità specifiche di quella relazione ti davano sicurezza? (es: disponibilità, coerenza, accettazione...)", placeholder:"Mi dava sicurezza perché..." },
+      { type:'action', text:"Quelle qualità che hai descritto — le riconosci anche in te, nel modo in cui stai con le persone care? Spesso siamo base sicura per gli altri prima ancora di rendercene conto." },
+      { type:'question', q:"In quale relazione della tua vita senti di essere una base sicura per l'altra persona?", placeholder:"Penso di essere base sicura per..." },
+      { type:'question', q:"C'è qualcosa che vorresti rafforzare nel modo in cui coltivi le tue relazioni più importanti?", placeholder:"Vorrei rafforzare..." },
+      { type:'complete', msg:"Riconoscere e coltivare la base sicura è un atto attivo di cura — verso te stessa e verso chi ami. Continua così.", cta:"Parla con Clara delle tue relazioni" }
+    ]
+  },
+  relazioniNutrono: {
+    title: 'Le relazioni che nutrono',
+    style: 'sicuro',
+    color: '#7CE8A8',
+    steps: [
+      { type:'intro', text:"Non tutte le relazioni ci nutrono allo stesso modo. Questo esercizio ti aiuta a fare chiarezza su quali connessioni rafforzano la tua base sicura e quali invece la erodono." },
+      { type:'question', q:"Pensa alle 3-4 relazioni più presenti nella tua vita adesso. Elencale brevemente.", placeholder:"Le relazioni più presenti sono..." },
+      { type:'question', q:"Per ognuna: dopo aver passato del tempo con questa persona, come mi sento di solito? Con più energia o con meno?", placeholder:"Con X mi sento... Con Y mi sento..." },
+      { type:'action', text:"Le relazioni non sono tutte uguali — alcune ci ricaricano, altre ci svuotano. Né le une né le altre sono necessariamente sbagliate, ma è importante saperlo." },
+      { type:'question', q:"C'è una relazione che vorresti coltivare di più? E una in cui vorresti stabilire confini più chiari?", placeholder:"Vorrei coltivare di più... Vorrei stabilire confini con..." },
+      { type:'question', q:"Qual è un piccolo passo concreto che potresti fare questa settimana per nutrire la relazione più importante per te?", placeholder:"Questa settimana potrei..." },
+      { type:'complete', msg:"Hai appena fatto una mappa emotiva delle tue relazioni. Usarla per fare scelte consapevoli è uno dei segni più belli di uno stile sicuro in azione.", cta:"Condividi con Clara le tue riflessioni" }
+    ]
+  },
+  tempesta: {
+    title: 'Quando la tempesta arriva',
+    style: 'sicuro',
+    color: '#7CE8A8',
+    steps: [
+      { type:'intro', text:"Avere uno stile sicuro non significa non essere mai toccata dai conflitti — significa avere risorse per attraversarli senza perdersi. Questo esercizio lavora su quei momenti di tempesta." },
+      { type:'question', q:"Pensa a un conflitto recente con qualcuno importante. Cosa è successo? Come ti sei sentita?", placeholder:"È successo che..." },
+      { type:'question', q:"Durante quel conflitto, c'è stato un momento in cui hai sentito di perdere la tua stabilità — diventare reattiva, chiuderti, o fare qualcosa che non ti rispecchiava?", placeholder:"Ho sentito di perdermi quando..." },
+      { type:'action', text:"Riconoscere quel momento è fondamentale. Non per giudicarti — ma per capire qual è il tuo segnale personale che indica: sto uscendo dalla mia base sicura." },
+      { type:'question', q:"Qual è il segnale — fisico, emotivo o comportamentale — che indica che stai perdendo la stabilità in un conflitto?", placeholder:"Il mio segnale è..." },
+      { type:'question', q:"Cosa ti aiuta a ritrovare la stabilità durante un conflitto intenso? Cosa ha funzionato in passato?", placeholder:"Mi aiuta..." },
+      { type:'complete', msg:"Conoscere il tuo segnale e le tue risorse di ritorno è il cuore della resilienza relazionale. Non si tratta di non essere colpita — si tratta di sapere come tornare a casa.", cta:"Approfondisci con Clara" }
+    ]
+  }
+};
+
+let currentExercise = null;
+let currentStep = 0;
+const exAnswers = {};
+
+function openExercise(id) {
+  currentExercise = id;
+  currentStep = 0;
+  exAnswers[id] = {};
+  document.getElementById('exModalOverlay').classList.add('open');
+  renderExStep();
+}
+
+function closeExercise() {
+  document.getElementById('exModalOverlay').classList.remove('open');
+  currentExercise = null;
+}
+
+function closeExerciseOnOverlay(e) {
+  if (e.target === document.getElementById('exModalOverlay')) closeExercise();
+}
+
+function renderExStep() {
+  const ex = EXERCISES[currentExercise];
+  const step = ex.steps[currentStep];
+  const total = ex.steps.length;
+  const pct = Math.round((currentStep / (total - 1)) * 100);
+
+  document.getElementById('exProgressFill').style.width = pct + '%';
+
+  const styleColors = { ansioso:'#E8A87C', evitante:'#7CB9E8', disorganizzato:'#B87CE8', sicuro:'#7CE8A8' };
+  const color = styleColors[ex.style] || '#C4897A';
+
+  let html = '';
+
+  if (step.type === 'intro') {
+    html = `
+      <div style="margin-top:24px">
+        <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:${color};margin-bottom:8px">Esercizio</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--charcoal);margin-bottom:16px">${ex.title}</h2>
+        <p style="font-size:15px;line-height:1.8;color:var(--warm-gray)">${step.text}</p>
+      </div>
+      <div class="ex-nav">
+        <button class="ex-btn-back" onclick="closeExercise()">Annulla</button>
+        <button class="ex-btn-next" onclick="exNext()">Inizia →</button>
+      </div>`;
+  } else if (step.type === 'action') {
+    html = `
+      <div style="margin-top:24px">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);opacity:0.6;margin-bottom:12px">Passo ${currentStep} di ${total - 2}</div>
+        <div style="background:rgba(${ex.style==='ansioso'?'232,168,124':ex.style==='evitante'?'124,185,232':ex.style==='disorganizzato'?'184,124,232':'124,232,168'},0.1);border-left:3px solid ${color};border-radius:0 12px 12px 0;padding:18px 20px;margin:16px 0">
+          <p style="font-size:15px;line-height:1.8;color:var(--charcoal)">${step.text}</p>
+        </div>
+      </div>
+      <div class="ex-nav">
+        <button class="ex-btn-back" onclick="exBack()">← Indietro</button>
+        <button class="ex-btn-next" onclick="exNext()">Fatto →</button>
+      </div>`;
+  } else if (step.type === 'question') {
+    const savedVal = exAnswers[currentExercise][currentStep] || '';
+    html = `
+      <div style="margin-top:24px">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);opacity:0.6;margin-bottom:12px">Passo ${currentStep} di ${total - 2}</div>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--charcoal);line-height:1.5;margin-bottom:16px">${step.q}</p>
+        <textarea class="ex-textarea" id="exAnswer" placeholder="${step.placeholder}" oninput="saveExAnswer()">${savedVal}</textarea>
+      </div>
+      <div class="ex-nav">
+        <button class="ex-btn-back" onclick="exBack()">← Indietro</button>
+        <button class="ex-btn-next" onclick="exNext()">Avanti →</button>
+      </div>`;
+  } else if (step.type === 'complete') {
+    html = `
+      <div class="ex-complete" style="margin-top:24px">
+        <div class="ex-complete-icon">✦</div>
+        <h3>Esercizio completato</h3>
+        <p>${step.msg}</p>
+        <div>
+          <button class="ex-chat-btn" onclick="exOpenChat(currentStep)">${step.cta}</button>
+          <button class="ex-close-btn" onclick="closeExercise()">Chiudi</button>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('exModalBody').innerHTML = html;
+}
+
+function saveExAnswer() {
+  const el = document.getElementById('exAnswer');
+  if (el) exAnswers[currentExercise][currentStep] = el.value;
+}
+
+function exNext() {
+  saveExAnswer();
+  const ex = EXERCISES[currentExercise];
+  if (currentStep < ex.steps.length - 1) {
+    currentStep++;
+    renderExStep();
+  }
+}
+
+function exBack() {
+  if (currentStep > 0) {
+    currentStep--;
+    renderExStep();
+  }
+}
+
+function exOpenChat(stepIdx) {
+  const ex = EXERCISES[currentExercise];
+  const cta = ex.steps[stepIdx] ? ex.steps[stepIdx].cta : 'Parla con Clara di com\'è andata';
+  const answers = exAnswers[currentExercise] || {};
+
+  // Costruisci messaggio contestuale con le risposte dell'esercizio
+  const answerLines = Object.entries(answers)
+    .filter(([,v]) => v && v.trim())
+    .map(([stepIdx, val]) => {
+      const step = ex.steps[parseInt(stepIdx)];
+      return step && step.q ? `— ${step.q}\n  "${val.trim()}"` : null;
+    })
+    .filter(Boolean);
+
+  let fullMsg = `Ho appena completato l'esercizio "${ex.title}"`;
+  if (answerLines.length > 0) {
+    fullMsg += ` e voglio condividere quello che è emerso:\n\n${answerLines.join('\n\n')}`;
+  }
+  fullMsg += `\n\n${cta}`;
+
+  closeExercise();
+
+  // Piccolo timeout per permettere al DOM di aggiornarsi
+  setTimeout(() => {
+    showView('chat');
+    const input = document.getElementById('messageInput');
+    input.value = fullMsg;
+    autoResize(input);
+    input.focus();
+    // Scroll in fondo alla chat
+    const area = document.getElementById('messagesArea');
+    if (area) area.scrollTop = area.scrollHeight;
+  }, 100);
+}
+
+// ─── WAITLIST / PIANI ───
+function openWaitlist(piano, prezzo) {
+  document.getElementById('waitlistTitle').textContent = 'Clara ' + piano + ' — ' + prezzo;
+  document.getElementById('waitlistDesc').textContent = 'I pagamenti saranno disponibili a breve. Lascia la tua email e ti avviseremo appena puoi attivare il piano — con uno sconto di benvenuto del 20%.';
+  document.getElementById('waitlistMsg').style.display = 'none';
+  document.getElementById('waitlistName').value = '';
+  document.getElementById('waitlistEmail').value = '';
+  document.getElementById('waitlistOverlay').classList.add('open');
+}
+
+function closeWaitlist() {
+  document.getElementById('waitlistOverlay').classList.remove('open');
+}
+
+function closeWaitlistOnOverlay(e) {
+  if (e.target === document.getElementById('waitlistOverlay')) closeWaitlist();
+}
+
+function submitWaitlist() {
+  const name = document.getElementById('waitlistName').value.trim();
+  const email = document.getElementById('waitlistEmail').value.trim();
+  const msg = document.getElementById('waitlistMsg');
+
+  if (!name || !email) {
+    msg.style.display = 'block';
+    msg.style.background = 'rgba(226,75,74,0.08)';
+    msg.style.borderColor = 'rgba(226,75,74,0.2)';
+    msg.style.color = '#A32D2D';
+    msg.textContent = 'Inserisci nome ed email per continuare.';
+    return;
+  }
+  if (!email.includes('@')) {
+    msg.style.display = 'block';
+    msg.style.background = 'rgba(226,75,74,0.08)';
+    msg.style.borderColor = 'rgba(226,75,74,0.2)';
+    msg.style.color = '#A32D2D';
+    msg.textContent = 'Inserisci un indirizzo email valido.';
+    return;
+  }
+
+  // Salva in localStorage (in produzione si manderebbe a un backend)
+  const waitlist = JSON.parse(localStorage.getItem('clara_waitlist') || '[]');
+  waitlist.push({ name, email, piano: document.getElementById('waitlistTitle').textContent, date: new Date().toISOString() });
+  localStorage.setItem('clara_waitlist', JSON.stringify(waitlist));
+
+  msg.style.display = 'block';
+  msg.style.background = 'rgba(124,232,168,0.15)';
+  msg.style.borderColor = 'rgba(124,232,168,0.3)';
+  msg.style.color = '#085041';
+  msg.textContent = 'Perfetto, ' + name + '! Ti avviseremo appena i pagamenti sono attivi. Lo sconto del 20% è riservato.';
+
+  document.querySelector('.waitlist-submit').style.display = 'none';
+  document.getElementById('waitlistName').disabled = true;
+  document.getElementById('waitlistEmail').disabled = true;
+
+  setTimeout(() => closeWaitlist(), 3000);
+}
+
+// ─── RESET ONBOARDING ───
+function resetOnboarding() {
+  if (!confirm('Vuoi rifare il test? La conversazione attuale verrà mantenuta, ma il tuo profilo verrà ricalcolato.')) return;
+  // Resetta solo l'onboarding, mantieni la chiave API e i messaggi
+  const state = loadState() || {};
+  state.onboardingDone = false;
+  state.userStyle = null;
+  localStorage.setItem('clara_state', JSON.stringify(state));
+  // Resetta variabili in memoria
+  userStyle = null;
+  obStep = 0;
+  // Riporta tutti gli step allo stato iniziale
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('ob-step-0').classList.add('active');
+  document.querySelectorAll('.ob-option').forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('[id^="next-"]').forEach(b => b.disabled = true);
+  document.getElementById('ob-result-content').innerHTML = '';
+  renderProgress();
+  document.getElementById('onboarding').classList.remove('hidden');
+  closeSidebar();
+}
+
+// ─── INIT ───
+function init() {
+  const state = loadState();
+  if (state && state.onboardingDone) {
+    document.getElementById('onboarding').classList.add('hidden');
+    conversationHistory = state.conversationHistory || [];
+    userStyle = state.userStyle || null;
+    if (conversationHistory.length > 0) restoreMessages();
+    updateSidebarUser();
+  }
+  renderProgress();
+  updateCounter();
+}
+
+function restoreMessages() {
+  const area = document.getElementById('messagesArea');
+  area.innerHTML = '';
+  conversationHistory.forEach(msg => appendMessage(msg.role === 'user' ? 'user' : 'clara', msg.content, msg.ts));
+}
+
+// ─── MOBILE SIDEBAR ───
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('visible');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+// ─── NAVIGATION ───
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const ni = document.querySelectorAll('.nav-item');
+  if(name==='chat') ni[0].classList.add('active');
+  if(name==='specchio') ni[1].classList.add('active');
+  if(name==='progressi') ni[2].classList.add('active');
+  if(name==='esercizi') ni[3].classList.add('active');
+  if(name==='libri') ni[4].classList.add('active');
+  if(name==='piani') ni[5].classList.add('active');
+  closeSidebar();
+}
+
+function showStyle(s) {
+  const data = STYLES_DATA[s];
+  document.getElementById('stileTitle').textContent = data.title;
+  document.getElementById('stileSubtitle').textContent = 'Caratteristiche, pattern emotivi ed esercizi dedicati per lo stile '+data.title.toLowerCase()+'.';
+
+  // Esercizi per questo stile
+  const styleExercises = Object.entries(EXERCISES).filter(([,ex]) => ex.style === s);
+
+  // Badge "il tuo stile" se corrisponde al profilo
+  const isMyStyle = userStyle === s;
+  const myStyleBadge = isMyStyle
+    ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(${s==='ansioso'?'232,168,124':s==='evitante'?'124,185,232':s==='disorganizzato'?'184,124,232':'124,232,168'},0.15);color:${data.color};border-radius:20px;padding:5px 14px;font-size:12px;font-weight:500;margin-bottom:16px">✦ Il tuo profilo attuale</div>`
+    : `<button onclick="setMyStyle('${s}')" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--light-border);color:var(--warm-gray);border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;margin-bottom:16px;transition:all 0.2s;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='${data.color}';this.style.color='${data.color}'" onmouseout="this.style.borderColor='var(--light-border)';this.style.color='var(--warm-gray)'">Questo è il mio stile</button>`;
+
+  document.getElementById('stileContent').innerHTML = `
+    <div class="reflection-card" style="border-top:3px solid ${data.color}">
+      <div style="font-size:40px;margin-bottom:12px">${data.emoji}</div>
+      ${myStyleBadge}
+      <div class="card-label">Panoramica</div>
+      <h3>${data.title}</h3>
+      <p>${data.description}</p>
+    </div>
+
+    <div class="reflection-card">
+      <div class="card-label">Come si manifesta</div>
+      <h3>Caratteristiche principali</h3>
+      ${data.traits.map(t=>`<p style="margin-bottom:10px;padding-left:16px;border-left:2px solid ${data.color};margin-left:0;border-radius:0">${t}</p>`).join('')}
+    </div>
+
+    <div class="reflection-card">
+      <div class="card-label">Esercizi guidati</div>
+      <h3>Pratiche per questo stile</h3>
+      <p style="margin-bottom:16px">Clicca su un esercizio per iniziare — puoi farlo adesso, richiede pochi minuti.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${styleExercises.map(([id, ex]) => `
+          <div onclick="openExercise('${id}')" style="display:flex;align-items:center;justify-content:space-between;background:var(--cream);border-radius:14px;padding:14px 18px;cursor:pointer;transition:all 0.2s;border:1px solid transparent" onmouseover="this.style.background='white';this.style.borderColor='${data.color}40';this.style.transform='translateX(4px)'" onmouseout="this.style.background='var(--cream)';this.style.borderColor='transparent';this.style.transform='none'">
+            <div>
+              <div style="font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:3px">${ex.title}</div>
+              <div style="font-size:12px;color:var(--warm-gray)">${ex.steps.length - 2} passi · ${ex.steps.filter(st=>st.type==='question').length} domande</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${data.color}" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="reflection-card" style="background:linear-gradient(135deg,var(--cream),white)">
+      <div class="card-label">Parla con Clara</div>
+      <h3>Esplora il tuo stile in chat</h3>
+      <p>Vuoi che Clara ti guidi in modo personalizzato? Puoi raccontarle una situazione concreta e lavorarci insieme.</p>
+      <button onclick="startStyleChat('${s}')" style="margin-top:16px;padding:12px 20px;background:var(--charcoal);color:var(--cream);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='${data.color}'" onmouseout="this.style.background='var(--charcoal)'">Parla con Clara di questo →</button>
+    </div>`;
+
+  showView('stili');
+}
+
+function setMyStyle(s) {
+  userStyle = s;
+  saveState();
+  updateSidebarUser();
+  showStyle(s);
+}
+
+function startStyleChat(s) {
+  showView('chat');
+  const inp = document.getElementById('messageInput');
+  inp.value = `Voglio esplorare lo stile ${STYLES_DATA[s].title.toLowerCase()} con te.`;
+  inp.focus();
+}
+
+// ─── CHAT UTILS ───
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function getDateTime(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  const now = new Date();
+  const today = now.toDateString();
+  const yesterday = new Date(now - 86400000).toDateString();
+  const time = d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  if (d.toDateString() === today) return time;
+  if (d.toDateString() === yesterday) return 'Ieri ' + time;
+  return d.toLocaleDateString('it-IT', {day:'numeric', month:'short'}) + ' ' + time;
+}
+function getTime() { return getDateTime(); }
+
+function appendMessage(role, text, ts) {
+  const area = document.getElementById('messagesArea');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  const init = role==='clara' ? 'C' : 'T';
+  div.innerHTML = `<div class="message-avatar">${init}</div><div><div class="message-bubble">${text.replace(/\n/g,'<br>')}</div><div class="message-time">${getDateTime(ts)}</div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const area = document.getElementById('messagesArea');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator'; div.id = 'typingIndicator';
+  div.innerHTML = `<div class="message-avatar" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blush),var(--rose));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:14px;color:white;flex-shrink:0;margin-top:2px">C</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() { const t=document.getElementById('typingIndicator'); if(t) t.remove(); }
+
+// ─── SEND WITH STREAMING ───
+async function sendMessage() {
+  if (isStreaming) return;
+  if (!canSendMessage()) { updateCounter(); return; }
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  isStreaming = true;
+  input.value = ''; input.style.height = 'auto';
+
+  appendMessage('user', text);
+  conversationHistory.push({role:'user',content:text,ts:Date.now()});
+  incrementMsgCount();
+  updateCounter();
+  showTyping();
+
+  const lastUserMsg = conversationHistory.length > 0 ? conversationHistory[conversationHistory.length-1] : null;
+  const comesFromExercise = lastUserMsg && lastUserMsg.role === 'user' && lastUserMsg.content && lastUserMsg.content.includes('Ho appena completato l\'esercizio');
+
+  // Costruisci storico con timestamp per Clara
+  const historyWithTime = conversationHistory.map(msg => {
+    if (!msg.ts) return { role: msg.role, content: msg.content };
+    const d = new Date(msg.ts);
+    const label = d.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'}) + ' alle ' + d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+    return { role: msg.role, content: `[${label}] ${msg.content}` };
+  });
+
+  const systemPrompt = `Sei Clara, una compagna empatica ed esperta in psicologia dell'attaccamento.${userStyle ? ` L'utente ha uno stile di attaccamento prevalentemente ${userStyle}.` : ''}
+Il tuo ruolo è quello di un'amica esperta — non una terapeuta clinica, ma qualcuno di caldo, preparato e presente.
+TONO: Parla in italiano, con calore autentico. Empatica ma mai invadente. Fai domande aperte. Prima accogli, poi esplori. Concisa (max 4-5 righe) salvo richiesta diversa.
+CONOSCENZE: Stili di attaccamento (Bowlby, Ainsworth), regolazione emotiva, mindfulness, autocompassione.
+LIMITI: Non sei sostituta di un professionista. In caso di crisi, suggerisci aiuto professionale.
+TEMPO: Ogni messaggio include data e ora. Usale per capire quanto tempo è passato tra i messaggi — se sono passati giorni, Clara deve essere consapevole del salto temporale e non trattare messaggi vecchi come se fossero recenti.${comesFromExercise ? `
+CONTESTO IMPORTANTE: L'utente ha appena terminato un esercizio guidato e sta condividendo quello che è emerso. Accogli prima di tutto — non analizzare subito. Rispecchia quello che ha scritto in modo personale e concreto, riferendoti alle sue risposte specifiche. È un momento delicato e prezioso: trattalo con cura.` : ''}
+Rispondi sempre in italiano.`;
+
+  try {
+    const response = await fetch('https://super-truth-5867.danielbrunellivr.workers.dev/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        apiKey: getApiKey(),
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: historyWithTime
+      })
+    });
+
+    if (!response.ok) throw new Error('API error');
+
+    const data = await response.json();
+    removeTyping();
+
+    const reply = data.content?.[0]?.text || 'Mi dispiace, non sono riuscita a rispondere. Puoi riprovare?';
+    appendMessage('clara', reply);
+    conversationHistory.push({role:'assistant',content:reply,ts:Date.now()});
+    saveState();
+
+  } catch(err) {
+    removeTyping();
+    appendMessage('clara', 'Scusa, ho avuto un momento di difficoltà tecnica. Riprova tra poco — sono qui. 💙');
+  }
+
+  isStreaming = false;
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// ─── SPECCHIO INTERIORE ───
+async function generateProgressi() {
+  const btn = document.getElementById('progressiBtn');
+  const area = document.getElementById('progressiArea');
+
+  if (conversationHistory.length < 4) {
+    area.innerHTML = `<div class="reflection-card">
+      <div class="card-label">Percorso ancora breve</div>
+      <h3>Parliamo ancora un po'</h3>
+      <p>Per raccontare il tuo percorso, Clara ha bisogno di conoscerti un po' meglio. Scrivi qualche messaggio in più — poi torna qui.</p>
+    </div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Clara sta leggendo il tuo percorso...';
+  area.innerHTML = '';
+
+  const historyText = conversationHistory.map(msg => {
+    const d = msg.ts ? new Date(msg.ts).toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'}) + ' alle ' + new Date(msg.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) : 'data non disponibile';
+    const role = msg.role === 'user' ? 'Utente' : 'Clara';
+    return `[${d}] ${role}: ${msg.content}`;
+  }).join('\n\n');
+
+  try {
+    const resp = await fetch('https://super-truth-5867.danielbrunellivr.workers.dev/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        apiKey: getApiKey(),
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        system: `Sei Clara, esperta in psicologia dell'attaccamento. Hai avuto una serie di conversazioni con questa persona nel tempo. Analizza l'intera storia e restituisci ESCLUSIVAMENTE un oggetto JSON valido, senza testo prima o dopo, senza backtick, senza markdown.
+Il JSON deve avere esattamente questi campi:
+{
+  "parola_percorso": "una frase breve poetica (max 6 parole) che cattura dove si trova ora la persona nel suo cammino",
+  "narrativa": "Una lettera in prima persona di 4-6 frasi, scritta da Clara all'utente. Tono caldo, intimo, come una lettera tra amiche. Parla di come stai evolvendo, cosa stai imparando, dove senti che stai andando. Usa 'tu' e sii specifica su quello che hai letto nelle conversazioni.",
+  "temi": ["tema 1 ricorrente in 1 frase", "tema 2 ricorrente in 1 frase", "tema 3 ricorrente in 1 frase"],
+  "incoraggiamento": "Una cosa concreta e specifica che Clara ha notato — un cambiamento reale, anche piccolo. Inizia con 'Ho notato che...' e sii precisa, non generica.",
+  "evoluzione_stile": "Una frase onesta su come lo stile di attaccamento sembra stia evolvendo. IMPORTANTE: basati su quello che emerge REALMENTE dalle conversazioni, non sul profilo iniziale. Se le conversazioni mostrano pattern ansiosi ma il profilo dice sicuro, dillo esplicitamente e con cura."
+}`,
+        messages: [{role: 'user', content: `Ecco la nostra storia di conversazioni:\n\n${historyText}\n\nRaccontami il mio percorso.`}]
+      })
+    });
+
+    const data = await resp.json();
+    let prog;
+    try {
+      prog = JSON.parse((data.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim());
+    } catch { prog = null; }
+
+    if (prog) {
+      area.innerHTML = `
+        <div class="prog-parola" style="animation:fadeInUp 0.4s ease">
+          <div class="prog-parola-label">La parola del tuo percorso</div>
+          <div class="prog-parola-testo">"${prog.parola_percorso}"</div>
+        </div>
+
+        <div class="prog-narrativa" style="animation:fadeInUp 0.5s ease">
+          <div class="prog-narrativa-label">Una lettera da Clara</div>
+          <div class="prog-narrativa-testo">${prog.narrativa.replace(/\n/g, '<br><br>')}</div>
+          <div class="prog-firma">— Clara</div>
+        </div>
+
+        <div class="prog-temi" style="animation:fadeInUp 0.6s ease">
+          <div class="card-label" style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--rose);margin-bottom:16px">Temi ricorrenti nel tuo percorso</div>
+          ${prog.temi.map(t => `
+            <div class="prog-tema-item">
+              <div class="prog-tema-dot"></div>
+              <div class="prog-tema-testo">${t}</div>
+            </div>`).join('')}
+        </div>
+
+        <div class="prog-incoraggiamento" style="animation:fadeInUp 0.7s ease">
+          <div class="card-label" style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--deep-sage);margin-bottom:12px">Quello che ho notato</div>
+          <p style="font-size:14px;line-height:1.7;color:var(--charcoal)">${prog.incoraggiamento}</p>
+          ${prog.evoluzione_stile ? `<p style="font-size:13px;color:var(--warm-gray);margin-top:12px;padding-top:12px;border-top:1px solid var(--light-border)">${prog.evoluzione_stile}</p>` : ''}
+        </div>
+      `;
+    } else {
+      area.innerHTML = `<div class="reflection-card"><p>Clara ha avuto difficoltà a elaborare il percorso. Riprova tra poco.</p></div>`;
+    }
+  } catch {
+    area.innerHTML = `<div class="reflection-card"><p>Errore nella connessione. Riprova tra poco.</p></div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg> Aggiorna il percorso`;
+}
+
+async function generateReflection() {
+  const btn = document.getElementById('analyzeBtn');
+  const area = document.getElementById('reflectionArea');
+
+  if (conversationHistory.length === 0) {
+    area.innerHTML = `<div class="reflection-card"><div class="card-label">Nessuna conversazione</div><h3>Inizia a parlare con Clara</h3><p>Per generare il tuo specchio interiore, Clara ha bisogno di conoscerti un po'. Vai nella sezione "Parla con Clara" e condividi come ti senti.</p></div>`;
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Clara sta riflettendo...';
+  area.innerHTML = '';
+
+  try {
+    const resp = await fetch('https://super-truth-5867.danielbrunellivr.workers.dev/', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        apiKey: getApiKey(),
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        system:`Sei Clara, esperta in psicologia dell'attaccamento. Analizza la conversazione e restituisci ESCLUSIVAMENTE un oggetto JSON valido, senza testo prima o dopo, senza backtick, senza markdown. Sii concisa in ogni campo — max 2 frasi per campo.
+Il JSON deve avere esattamente questi campi:
+{
+  "tema_principale": "max 5 parole",
+  "stile_emergente": "uno tra: ansioso, evitante, disorganizzato, sicuro, misto",
+  "pattern_emotivo": "max 2 frasi su cosa emerge",
+  "punto_forza": "una qualità concreta, max 1 frase",
+  "area_crescita": "una area specifica, max 1 frase",
+  "messaggio_clara": "messaggio caldo, max 2 frasi"
+}
+IMPORTANTE: stile_emergente deve riflettere quello che emerge REALMENTE dalla conversazione, non il profilo iniziale.`,
+        messages:[...conversationHistory.map(m=>({role:m.role,content:m.content})),{role:'user',content:'Analizza la nostra conversazione e restituisci il JSON della riflessione.'}]
+      })
+    });
+    const data = await resp.json();
+    console.log('Specchio full API response:', JSON.stringify(data).slice(0, 500));
+    const rawText = data.content?.[0]?.text || '';
+    console.log('Specchio raw response:', rawText);
+    let ref = null;
+    try {
+      // Prova a estrarre il JSON anche se c'è testo prima/dopo
+      let cleaned = rawText.replace(/```json|```/g,'').trim();
+      // Se c'è testo prima del { cerca il primo {
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace > 0) cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+      const parsed = JSON.parse(cleaned);
+      // Valida campi — accetta anche stringhe vuote ma non undefined
+      if (parsed && typeof parsed === 'object' &&
+          'tema_principale' in parsed && 'stile_emergente' in parsed &&
+          'pattern_emotivo' in parsed && 'punto_forza' in parsed &&
+          'area_crescita' in parsed && 'messaggio_clara' in parsed) {
+        ref = parsed;
+      } else {
+        console.log('Campi mancanti nel JSON:', Object.keys(parsed));
+      }
+    } catch(e) {
+      console.log('JSON parse error:', e.message);
+      ref = null;
+    }
+
+    if (ref) {
+      const validStyles = ['ansioso','evitante','disorganizzato','sicuro','misto'];
+      const stileKey = validStyles.includes(ref.stile_emergente) ? ref.stile_emergente : 'misto';
+      const sd = STYLES_DATA[stileKey];
+
+      // Mostra avviso se stile emergente è diverso dal profilo iniziale
+      const stileDiverso = userStyle && stileKey !== userStyle && userStyle !== 'misto';
+      const avvisoStile = stileDiverso ? `
+        <div class="reflection-card" style="border-left:3px solid var(--rose);border-radius:0 20px 20px 0;background:rgba(196,137,122,0.06)">
+          <div class="card-label">Una cosa importante da notare</div>
+          <h3>Il tuo profilo sta raccontando qualcosa di diverso</h3>
+          <p>Il tuo test iniziale ha indicato uno stile <strong>${STYLES_DATA[userStyle]?.title || userStyle}</strong>, ma quello che emerge dalle nostre conversazioni sembra avvicinarsi di più allo stile <strong>${sd.title}</strong>. Questo è normale — il test è un punto di partenza, non una verità definitiva. Potresti voler <a href="#" onclick="showView('piani');return false;" style="color:var(--rose)">esplorare questo con Clara</a> o <a href="#" onclick="resetOnboarding();return false;" style="color:var(--rose)">rifare il test</a> con più consapevolezza.</p>
+        </div>` : '';
+
+      area.innerHTML = `
+        ${avvisoStile}
+        <div class="reflection-card" style="border-top:3px solid ${sd.color}">
+          <div class="card-label">Tema emerso dalla conversazione</div>
+          <h3>${ref.tema_principale}</h3><p>${ref.pattern_emotivo}</p>
+          <span class="style-tag ${sd.tagClass}">${sd.title}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="reflection-card"><div class="card-label">Il tuo punto di forza</div><h3>✦ Cosa emerge di bello</h3><p>${ref.punto_forza}</p></div>
+          <div class="reflection-card"><div class="card-label">Area di crescita</div><h3>🌱 Dove puoi evolvere</h3><p>${ref.area_crescita}</p></div>
+        </div>
+        <div class="reflection-card" style="background:linear-gradient(135deg,var(--cream),white);border-left:3px solid var(--rose)">
+          <div class="card-label">Un messaggio da Clara</div>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;line-height:1.7;color:var(--charcoal)">"${ref.messaggio_clara}"</p>
+          <p style="margin-top:10px;font-size:12px;color:var(--rose)">— Clara</p>
+        </div>`;
+    } else {
+      area.innerHTML = `<div class="reflection-card"><p>Clara ha avuto difficoltà a elaborare. Riprova tra poco.</p></div>`;
+    }
+  } catch {
+    area.innerHTML = `<div class="reflection-card"><p>Errore nella connessione. Riprova tra poco.</p></div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke-linecap="round"/></svg> Aggiorna la riflessione`;
+}
+
+// ─── API KEY ───
+function getApiKey() {
+  return localStorage.getItem('clara_apikey') || '';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  const err = document.getElementById('apiKeyError');
+  if (!val.startsWith('sk-ant-')) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  localStorage.setItem('clara_apikey', val);
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  init();
+}
+
+function checkApiKey() {
+  const key = getApiKey();
+  if (!key) {
+    document.getElementById('apiKeyScreen').style.display = 'flex';
+    return false;
+  }
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  return true;
+}
+
+// ─── START ───
+if (!checkApiKey()) { /* aspetta inserimento chiave */ } else { init(); }
+</script>
+</body>
+</html>
