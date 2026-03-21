@@ -844,6 +844,7 @@ async function init() {
 
   // Controlla se c'è una sessione Supabase attiva
   const hasSession = await initSupabase();
+console.log('hasSession:', hasSession, 'currentUser:', currentUser);
   if (!hasSession) { showAuthScreen(); return; }
 
   if (hasSession) {
