@@ -1293,16 +1293,8 @@ function saveApiKey() {
 }
 
 function checkApiKey() {
-  const key = getApiKey();
-  if (!key) {
-    document.getElementById('apiKeyScreen').style.display = 'flex';
-    return false;
-  }
-  document.getElementById('apiKeyScreen').style.display = 'none';
   return true;
 }
 
 // ─── START ───
-// La chiave API è hardcoded nel proxy Cloudflare — non serve più chiederla
-document.getElementById('apiKeyScreen').style.display = 'none';
 init();
