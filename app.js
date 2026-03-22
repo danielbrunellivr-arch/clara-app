@@ -1,3 +1,4 @@
+// Clara app - aggiornato 22 marzo 2026
 // ─── SUPABASE ───
 const SUPABASE_URL = 'https://qbwbhnzsliqijyltpcki.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_4bzt7LbS8By2fiWM5nB7dA_7vfFdMvn';
