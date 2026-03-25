@@ -19,6 +19,7 @@ async function initSupabase() {
   console.log('getSession result:', existingSession?.user?.email, 'profile after load:', userProfile?.stile_attaccamento);
   if (existingSession) {
     currentUser = existingSession.user;
+    console.log('Calling loadProfile for user:', currentUser.id);
     await loadProfile();
     console.log('After loadProfile:', userProfile?.stile_attaccamento);
     return true;
