@@ -952,7 +952,9 @@ function hideLoading() {
 async function init() {
   // Registra service worker PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister());
+    });
   }
 
   // Controlla se c'è una sessione Supabase attiva
